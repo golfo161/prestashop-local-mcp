@@ -25,6 +25,7 @@ wheels/
 .venv
 env/
 venv/
+venv_prestashop/
 ENV/
 env.bak/
 venv.bak/

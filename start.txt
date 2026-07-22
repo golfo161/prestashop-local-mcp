@@ -1,0 +1,4 @@
+cd "C:\Users\jordi\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv_prestashop\Scripts\Activate.ps1
+.\venv_prestashop\Scripts\prestashop-mcp.exe --log-level DEBUG

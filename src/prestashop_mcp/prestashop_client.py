@@ -87,6 +87,23 @@ class PrestaShopClient:
             {"id": lang["id"], "value": value}
             for lang in self.available_languages
         ]
+
+    def _replace_multilingual_values(
+        self,
+        existing_field: Any,
+        value: str
+    ) -> List[Dict[str, Any]]:
+        """Replace values while preserving language IDs returned by PrestaShop."""
+        if isinstance(existing_field, list) and existing_field:
+            language_ids = [
+                item.get("id")
+                for item in existing_field
+                if isinstance(item, dict) and item.get("id") is not None
+            ]
+            if language_ids:
+                return [{"id": lang_id, "value": value} for lang_id in language_ids]
+
+        return self._init_multilingual_field(value)
     
     async def _make_request(
         self, 
@@ -102,6 +119,7 @@ class PrestaShopClient:
         # Always request JSON format for responses
         if params is None:
             params = {}
+        params['ws_key'] = self.config.api_key
         params['output_format'] = 'JSON'
         
         # Prepare request body and headers
@@ -429,16 +447,27 @@ class PrestaShopClient:
             raise PrestaShopAPIError(f"Product {product_id} not found")
         
         product_data = existing['product']
+        product_data.pop('manufacturer_name', None)
+        product_data.pop('associations', None)
         
         # Update fields with correct multilingual structure
         if 'name' in kwargs:
-            product_data['name'] = self._init_multilingual_field(kwargs['name'])
+            product_data['name'] = self._replace_multilingual_values(
+                product_data.get('name'),
+                kwargs['name']
+            )
             link_rewrite = self._generate_link_rewrite(kwargs['name'])
-            product_data['link_rewrite'] = self._init_multilingual_field(link_rewrite)
+            product_data['link_rewrite'] = self._replace_multilingual_values(
+                product_data.get('link_rewrite'),
+                link_rewrite
+            )
         if 'price' in kwargs:
             product_data['price'] = str(kwargs['price'])
         if 'description' in kwargs:
-            product_data['description'] = self._init_multilingual_field(kwargs['description'])
+            product_data['description'] = self._replace_multilingual_values(
+                product_data.get('description'),
+                kwargs['description']
+            )
         if 'category_id' in kwargs:
             product_data['id_category_default'] = kwargs['category_id']
         if 'active' in kwargs:
