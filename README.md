@@ -1,26 +1,71 @@
-# PrestaShop MCP Server
+# PrestaShop Local MCP
 
-A professional Model Context Protocol (MCP) Server for complete management of PrestaShop e-commerce stores with **extended functionality**.
+Servidor MCP local para gestionar una tienda PrestaShop desde clientes compatibles con Model Context Protocol.
 
-## Guia rapida: Windows + Codex en ChatGPT Desktop
+Este fork esta adaptado para alojamientos donde la cabecera `Authorization` no llega correctamente a PrestaShop. En lugar de depender de Basic Auth, el cliente envia la clave del Webservice como parametro `ws_key`, que es compatible con la API de PrestaShop.
 
-Esta guia deja el MCP funcionando en local con Codex dentro de ChatGPT Desktop. El servidor se ejecuta en tu ordenador mediante `stdio` y Codex lo arranca desde `config.toml`.
+## 1. Overview
 
-> Nota importante sobre ChatGPT Apps: ChatGPT no se conecta directamente a servidores MCP locales `stdio`. Para usarlo como app MCP de ChatGPT fuera de Codex necesitas exponerlo como servidor MCP remoto o usar Secure MCP Tunnel. La configuracion local siguiente es para Codex/ChatGPT Desktop.
+Este MCP permite consultar y administrar una tienda PrestaShop desde asistentes como Codex en ChatGPT Desktop o Claude Desktop.
 
-### 1. Clonar el repositorio
+Herramientas principales:
+
+- `test_connection`: prueba la conexion con la API de PrestaShop.
+- `get_shop_info`: muestra informacion general de la tienda.
+- `get_products`: lista y consulta productos.
+- `create_product`, `update_product`, `delete_product`: gestion de productos.
+- `update_product_stock`, `update_product_price`: cambios de stock y precio.
+- `get_categories`, `create_category`, `update_category`, `delete_category`: gestion de categorias.
+- `get_customers`, `create_customer`, `update_customer`: gestion de clientes.
+- `get_orders`, `update_order_status`, `get_order_states`: gestion de pedidos.
+- `get_modules`, `get_module_by_name`, `install_module`, `update_module_status`: gestion de modulos.
+- `get_main_menu_links`, `update_main_menu_link`, `add_main_menu_link`: gestion del menu principal.
+- `clear_cache`, `get_cache_status`: cache de PrestaShop.
+- `get_themes`, `update_theme_setting`: informacion y ajustes del tema.
+
+Recomendacion: empieza siempre con herramientas de lectura antes de usar acciones que creen, modifiquen o borren datos.
+
+## 2. Requisitos
+
+Estos programas deben existir en el ordenador donde ejecutes el MCP.
+
+- Windows 10/11.
+- Python 3.10 o superior.
+- Git, o descarga manual del ZIP desde GitHub.
+- Acceso al back office de PrestaShop para crear una clave de Webservice.
+- ChatGPT Desktop con Codex, Claude Desktop, o ambos.
+
+## 3. Preparar PrestaShop
+
+Antes de instalar el MCP, activa la API en tu tienda.
+
+1. Entra en el back office de PrestaShop.
+2. Ve a `Parametros avanzados` -> `Webservice`.
+3. Activa el servicio web.
+4. Crea una clave de Webservice de 32 caracteres.
+5. Marca la clave como activa.
+6. Asigna permisos a los recursos que quieras usar.
+
+Para una primera prueba de lectura, concede al menos:
+
+- `GET` en `configurations`.
+- `GET` en `products`.
+- `GET` en `categories`.
+- `GET` en `customers`.
+- `GET` en `orders`.
+- `GET` en `stock_availables`.
+- `GET` en `languages`.
+
+Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DELETE` en los recursos correspondientes.
+
+## 4. Instalar el MCP local
+
+Estos pasos descargan el repositorio, crean un entorno virtual aislado e instalan las dependencias.
 
 ```powershell
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
 git clone https://github.com/golfo161/prestashop-local-mcp.git PRESTASHOP-LOCAL-MCP
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
-```
-
-Si no tienes `git` instalado, descarga el ZIP del repositorio desde GitHub y descomprimelo como `PRESTASHOP-LOCAL-MCP`.
-
-### 2. Crear el entorno virtual
-
-```powershell
 python -m venv venv_prestashop
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv_prestashop\Scripts\Activate.ps1
@@ -29,15 +74,19 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-Comprueba que la instalacion carga:
+Si PowerShell no permite activar el entorno virtual, puedes ejecutar el binario del MCP directamente desde `venv_prestashop\Scripts` sin activar nada.
+
+Comprueba que el paquete carga:
 
 ```powershell
 python -c "import prestashop_mcp; print('Installation successful')"
 ```
 
-### 3. Crear el fichero `.env`
+## 5. Crear el fichero de configuracion `.env`
 
-Crea este fichero en la raiz del proyecto:
+El fichero `.env` guarda la URL de la tienda y la clave del Webservice. No se debe subir a Git.
+
+Crea este archivo:
 
 ```text
 C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP\.env
@@ -51,22 +100,35 @@ PRESTASHOP_API_KEY=TU_API_KEY_DE_PRESTASHOP
 LOG_LEVEL=INFO
 ```
 
-La clave debe estar activa en PrestaShop, con el Webservice habilitado y permisos sobre los recursos que quieras usar. Para una prueba inicial de lectura, activa al menos `GET` en `configurations`, `products`, `categories`, `customers`, `orders`, `stock_availables` y `languages`.
+Ejemplo:
 
-### 4. Probar la API de PrestaShop
+```env
+PRESTASHOP_SHOP_URL=https://ovillos.com
+PRESTASHOP_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+LOG_LEVEL=INFO
+```
 
-En algunos alojamientos la cabecera `Authorization` no llega a PrestaShop. Este fork usa `ws_key`, que evita ese problema.
+## 6. Probar la API directamente
+
+Esta prueba confirma que PrestaShop acepta la clave antes de arrancar el MCP.
 
 ```powershell
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
 $key = (Get-Content .env | Where-Object { $_ -like "PRESTASHOP_API_KEY=*" }).Split("=",2)[1]
 Invoke-WebRequest -Uri "https://tu-tienda.com/api/configurations?output_format=JSON&ws_key=$key" -UseBasicParsing
 ```
 
-El resultado esperado es `StatusCode : 200`.
+Resultado esperado:
 
-### 5. Ejecutar el MCP local por primera vez
+```text
+StatusCode : 200
+```
 
-Desde PowerShell:
+Si recibes `401 Unauthorized`, revisa que el Webservice este activo, que la clave sea correcta y que tenga permisos `GET` en `configurations`.
+
+## 7. Ejecutar el MCP local por primera vez
+
+Esta prueba arranca el servidor MCP manualmente. Sirve para comprobar que el modulo funciona antes de conectarlo a un cliente.
 
 ```powershell
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
@@ -75,7 +137,7 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv_prestashop\Scripts\prestashop-mcp.exe --log-level DEBUG
 ```
 
-Si todo esta bien, veras algo parecido a:
+Salida esperada:
 
 ```text
 Testing API connection with extended functionality...
@@ -84,17 +146,21 @@ Starting Enhanced PrestaShop MCP server...
 Server ready with full CRUD operations + Navigation Tree management
 ```
 
-Puedes parar el servidor con `Ctrl+C`. Para uso desde Codex no hace falta dejarlo abierto: Codex lo arrancara automaticamente cuando lea su configuracion.
+Para detenerlo, pulsa `Ctrl+C`.
 
-### 6. Crear el fichero de configuracion para Codex en ChatGPT Desktop
+Nota: si usas Codex o Claude Desktop, normalmente no tienes que dejar este comando abierto. El cliente arrancara el MCP automaticamente cuando lea su fichero de configuracion.
 
-El fichero persistente de Codex esta en:
+## 8. Configurar ChatGPT Desktop con Codex
+
+Esta opcion es para usar el MCP desde Codex en ChatGPT Desktop. Codex lee sus servidores MCP desde `config.toml`.
+
+Edita o crea este fichero:
 
 ```text
 C:\Users\TU_USUARIO\.codex\config.toml
 ```
 
-Anade este bloque al final, cambiando `TU_USUARIO` y la ruta si corresponde:
+Copia este bloque al final del archivo y cambia `TU_USUARIO` por tu usuario real:
 
 ```toml
 [mcp_servers.prestashop]
@@ -106,19 +172,26 @@ tool_timeout_sec = 120
 default_tools_approval_mode = 'writes'
 ```
 
-No pongas la API key en `config.toml`: el servidor la lee desde el `.env` del proyecto.
+Que hace cada campo:
 
-Despues de guardar `config.toml`, reinicia ChatGPT Desktop/Codex o abre una nueva tarea para que cargue el MCP.
+- `command`: Python del entorno virtual que arrancara el MCP.
+- `args`: modulo Python del servidor MCP.
+- `cwd`: carpeta del proyecto; desde aqui se lee el `.env`.
+- `startup_timeout_sec`: tiempo maximo para arrancar.
+- `tool_timeout_sec`: tiempo maximo para ejecutar una herramienta.
+- `default_tools_approval_mode = 'writes'`: pide aprobacion para acciones de escritura o modificacion.
 
-### 7. Probar desde Codex
+No pongas la API key en `config.toml`; se lee desde `.env`.
 
-En una tarea nueva pide:
+Despues de guardar el archivo, reinicia ChatGPT Desktop/Codex o abre una nueva tarea.
+
+Prueba desde Codex:
 
 ```text
 Usa el MCP de prestashop para probar la conexion.
 ```
 
-Pruebas seguras de lectura:
+Pruebas seguras:
 
 ```text
 Lista 5 productos de la tienda.
@@ -126,457 +199,121 @@ Muestra las categorias principales.
 Dame informacion general de la tienda.
 ```
 
-Evita al principio acciones de escritura como crear, actualizar, borrar productos o limpiar cache hasta confirmar que las lecturas funcionan.
+## 9. Configurar Claude Desktop
 
-### 8. Actualizaciones del modulo y reconexion
+Esta opcion es para usar el MCP desde Claude Desktop. Claude lee sus servidores MCP desde `claude_desktop_config.json`.
 
-Si cambias ficheros del modulo, especialmente `src/prestashop_mcp/prestashop_mcp_server.py` o cualquier definicion de herramientas, reinicia ChatGPT Desktop/Codex o abre una nueva tarea para que Codex vuelva a arrancar el MCP y lea las herramientas actualizadas.
+Edita o crea este fichero:
 
-Si lo conectas como una app MCP de ChatGPT remoto, los cambios en herramientas no se aplican automaticamente: hay que usar `Refresh`/`Scan Tools` y, si la app esta publicada en un workspace, revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app segun el estado de la beta.
+```text
+C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json
+```
 
-## 🚀 Overview
+Copia este contenido, adaptando `TU_USUARIO`:
 
-This MCP Server enables complete management of your PrestaShop store through AI applications like Claude Desktop. With specialized tools, you can manage all aspects of your e-commerce business - from products and categories to customers, orders, **modules, cache, themes, and navigation menus**.
+```json
+{
+  "mcpServers": {
+    "prestashop": {
+      "command": "C:\\Users\\TU_USUARIO\\OneDrive\\Documentos\\PYTHON\\PRESTASHOP-LOCAL-MCP\\venv_prestashop\\Scripts\\python.exe",
+      "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
+      "cwd": "C:\\Users\\TU_USUARIO\\OneDrive\\Documentos\\PYTHON\\PRESTASHOP-LOCAL-MCP"
+    }
+  }
+}
+```
 
-## ✨ Features
+Que hace cada campo:
 
-- **🛍️ Complete Store Management** - Tools for all e-commerce areas
-- **🔧 Module Management** - Install, activate, deactivate modules
-- **💾 Cache Management** - Clear and monitor cache status
-- **🎨 Theme Management** - Configure themes and settings
-- **📋 Menu Management** - Manage main navigation (ps_mainmenu)
-- **🏗️ MCP Protocol Compliance** for seamless AI integration
-- **⚡ Async/Await Architecture** for maximum performance
-- **🛡️ Comprehensive Error Handling** and validation
-- **🔧 Production-Ready** with complete test suite
-- **📖 Comprehensive Documentation** with practical examples
+- `command`: Python del entorno virtual que arrancara el MCP.
+- `args`: modulo Python del servidor MCP.
+- `cwd`: carpeta del proyecto; desde aqui se lee el `.env`.
 
-## 🛠️ Available Tools
+No pongas la API key en el JSON si ya tienes `.env` en el proyecto.
 
-### 📦 Unified Product Management
-- `get_products` - **UNIFIED** Product retrieval supporting all use cases:
-  - **Single Product by ID**: Complete product details including stock and category info
-  - **Multiple Products**: List with optional filtering and enhancement
-  - **Flexible Enhancement**: Optional stock info, category details, custom field selection
-  - **Smart Filtering**: By category, name, or custom criteria
-- `create_product` - Create new products with complete configuration
-- `update_product` - Edit product information
-- `delete_product` - Remove products
-- `update_product_stock` - Manage inventory levels
-- `update_product_price` - Update pricing
+Despues de guardar el archivo, cierra Claude Desktop completamente y vuelve a abrirlo.
 
-### 🏷️ Category Management
-- `get_categories` - Retrieve categories (with hierarchy filter)
-- `create_category` - Create new categories
-- `update_category` - Edit categories
-- `delete_category` - Remove categories
+Prueba desde Claude:
 
-### 👥 Customer Management
-- `get_customers` - Retrieve and filter customers
-- `create_customer` - Create new customers
-- `update_customer` - Edit customer data
+```text
+Use prestashop:test_connection
+```
 
-### 📋 Order Management
-- `get_orders` - Retrieve and filter orders
-- `update_order_status` - Change order status
-- `get_order_states` - Retrieve available statuses
+Luego prueba lecturas:
 
-### 🔧 Module Management **NEW**
-- `get_modules` - List all PrestaShop modules
-- `get_module_by_name` - Get specific module details
-- `install_module` - Install new modules
-- `update_module_status` - Activate/deactivate modules
+```text
+List 5 products from my PrestaShop store.
+Show the main categories.
+Get general shop information.
+```
 
-### 📋 Main Menu Management **NEW**
-- `get_main_menu_links` - Retrieve ps_mainmenu navigation links
-- `update_main_menu_link` - Edit existing menu links
-- `add_main_menu_link` - Add new navigation links
+## 10. ChatGPT Apps y MCP remoto
 
-### 💾 Cache Management **NEW**
-- `clear_cache` - Clear PrestaShop cache (all types)
-- `get_cache_status` - Monitor cache configuration
+ChatGPT Apps no se conecta directamente a servidores MCP locales `stdio`. Para usar este MCP como app de ChatGPT fuera de Codex, debes exponerlo como servidor MCP remoto o usar Secure MCP Tunnel.
 
-### 🎨 Theme Management **NEW**
-- `get_themes` - Get current theme information
-- `update_theme_setting` - Configure theme settings
+Resumen:
 
-### ⚙️ Store Administration
-- `test_connection` - Test API connection
-- `get_shop_info` - Comprehensive store statistics
+- Codex en ChatGPT Desktop: usa `C:\Users\TU_USUARIO\.codex\config.toml`.
+- Claude Desktop: usa `C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json`.
+- ChatGPT Apps: requiere MCP remoto o Secure MCP Tunnel.
 
-## 📋 Installation
+## 11. Actualizaciones y reconexion
 
-### ⚠️ Recommended Installation (Virtual Environment)
+Si modificas ficheros del modulo, reinicia el cliente para que vuelva a cargar el servidor MCP.
 
-**This approach prevents module conflicts and ensures reliable installation:**
+Reinicia especialmente si cambias:
 
-#### Windows:
+- `src/prestashop_mcp/prestashop_mcp_server.py`
+- definiciones de herramientas
+- nombres de herramientas
+- parametros de herramientas
+- permisos o configuracion del cliente MCP
+
+En Codex o Claude Desktop, lo normal es cerrar y volver a abrir el cliente o iniciar una nueva tarea/conversacion.
+
+En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automaticamente. Hay que refrescar o escanear herramientas otra vez. Si la app ya esta publicada en un workspace, un administrador debe revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app.
+
+## 12. Comandos utiles
+
+Arrancar manualmente el MCP:
+
 ```powershell
-# Clone repository
-git clone https://github.com/latinogino/prestashop-mcp.git
-cd prestashop-mcp
-
-# Create virtual environment
-python -m venv venv_prestashop
-
-# Activate virtual environment
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv_prestashop\Scripts\Activate.ps1
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install package in development mode
-pip install -e .
-
-# Verify installation
-python -c "import prestashop_mcp; print('✅ Installation successful')"
-
-# Note the Python path for Claude Desktop configuration
-Write-Host "Python Path: $((Get-Command python).Source)"
+.\venv_prestashop\Scripts\prestashop-mcp.exe --log-level DEBUG
 ```
 
-#### Linux/macOS:
-```bash
-# Clone repository
-git clone https://github.com/latinogino/prestashop-mcp.git
-cd prestashop-mcp
+Arrancar sin activar el entorno virtual:
 
-# Create virtual environment
-python3 -m venv venv_prestashop
-
-# Activate virtual environment
-source venv_prestashop/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Install package in development mode
-pip install -e .
-
-# Verify installation
-python -c "import prestashop_mcp; print('✅ Installation successful')"
-
-# Note the Python path for Claude Desktop configuration
-which python
+```powershell
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+.\venv_prestashop\Scripts\prestashop-mcp.exe --log-level DEBUG
 ```
 
-### ⚙️ Configuration
+Ver ayuda:
 
-Create a `.env` file based on `.env.example`:
-
-```bash
-# PrestaShop Configuration
-PRESTASHOP_SHOP_URL=https://your-shop.example.com
-PRESTASHOP_API_KEY=YOUR_API_KEY
-
-# Logging
-LOG_LEVEL=INFO
+```powershell
+.\venv_prestashop\Scripts\prestashop-mcp.exe --help
 ```
 
-## 🎯 Usage
+Ejecutar tests seguros:
 
-### 🤖 With Claude Desktop
-
-#### Using Virtual Environment (Recommended)
-
-Add this configuration to `claude_desktop_config.json`:
-
-**Windows:**
-```json
-{
-  "mcpServers": {
-    "prestashop": {
-      "command": "C:\\\\path\\\\to\\\\prestashop-mcp\\\\venv_prestashop\\\\Scripts\\\\python.exe",
-      "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
-      "cwd": "C:\\\\path\\\\to\\\\prestashop-mcp",
-      "env": {
-        "PRESTASHOP_SHOP_URL": "https://your-shop.example.com",
-        "PRESTASHOP_API_KEY": "YOUR_API_KEY"
-      }
-    }
-  }
-}
+```powershell
+.\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py
 ```
 
-**Linux/macOS:**
-```json
-{
-  "mcpServers": {
-    "prestashop": {
-      "command": "/path/to/prestashop-mcp/venv_prestashop/bin/python",
-      "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
-      "cwd": "/path/to/prestashop-mcp",
-      "env": {
-        "PRESTASHOP_SHOP_URL": "https://your-shop.example.com",
-        "PRESTASHOP_API_KEY": "YOUR_API_KEY"
-      }
-    }
-  }
-}
-```
-
-### 💻 CLI Usage
-
-```bash
-# Activate virtual environment first (if using venv)
-source venv_prestashop/bin/activate  # Linux/macOS
-.\venv_prestashop\Scripts\Activate.ps1  # Windows
-
-# With environment variables
-prestashop-mcp
-
-# With direct parameters
-prestashop-mcp --shop-url https://your-shop.com --api-key YOUR_API_KEY
-
-# Debug mode
-prestashop-mcp --log-level DEBUG
-```
-
-## 🆕 Extended Functionality Examples
-
-### **Module Management**
-```
-"Show me all modules in my PrestaShop store"
-"Activate the ps_mainmenu module"
-"Deactivate the blockcart module"
-"Get details for the ps_featuredproducts module"
-```
-
-### **Main Menu Management**
-```
-"Show me all main menu links"
-"Add a new menu link called 'Special Offers' pointing to /special-offers"
-"Update menu link 3 to point to /new-products"
-"Make menu link 5 inactive"
-```
-
-### **Cache Management**
-```
-"Clear all PrestaShop cache"
-"Show me the current cache status"
-"Check if CSS cache is enabled"
-```
-
-### **Theme Management**
-```
-"Show me current theme settings"
-"Update the PS_LOGO setting to /img/new-logo.png"
-"Change the PS_THEME_NAME to my-custom-theme"
-```
-
-## 🆕 Unified Product API
-
-The `get_products` tool handles **all product retrieval scenarios** with a single, powerful interface:
-
-### **Use Cases:**
-
-| Scenario | Parameters | Result |
-|----------|------------|--------|
-| **Single Product Details** | `product_id="15", include_stock=true, include_category_info=true` | Complete product info with stock & category |
-| **Product List** | `limit=20, category_id="5"` | List of products in category 5 |
-| **Enhanced List** | `limit=10, include_details=true, include_stock=true` | Full product details with stock for 10 products |
-| **Filtered Search** | `name_filter="laptop", include_details=true` | All laptop products with complete information |
-| **Custom Fields** | `display="id,name,price", limit=50` | Specific fields only for 50 products |
-
-## 🛠️ Advanced Features
-
-### **ps_mainmenu Integration**
-The ps_mainmenu module management allows you to:
-- Retrieve all main navigation links
-- Add custom navigation items
-- Update existing menu links (name, URL, status)
-- Control menu link positioning
-
-### **Cache Performance Optimization**
-Cache management includes:
-- Clear all cache types (CSS, JS, Template, General)
-- Monitor cache status for performance optimization
-- Toggle cache settings for development/production
-
-### **Module Lifecycle Management**
-Complete module control:
-- List all installed modules with status
-- Install new modules programmatically
-- Activate/deactivate modules as needed
-- Get detailed module information
-
-### **Theme Customization**
-Theme management capabilities:
-- View current theme configuration
-- Update theme-specific settings
-- Manage logos and visual elements
-- Configure theme-related PrestaShop settings
-
-## 🔧 Troubleshooting
-
-### ❌ Common Issues
-
-#### "ModuleNotFoundError: No module named 'prestashop_mcp'"
-
-**Solution:** Use virtual environment and ensure package is installed:
-```bash
-# Check if in virtual environment
-python -c "import sys; print(sys.prefix)"
-
-# Reinstall package
-pip install -e .
-
-# Verify installation
-python -c "import prestashop_mcp; print('Module found')"
-```
-
-#### Module Management Issues
-
-**Check Module Permissions:**
-```bash
-# Ensure your API key has module management permissions
-curl -u "YOUR_API_KEY:" https://your-shop.com/api/modules?output_format=JSON
-```
-
-#### Cache Clear Not Working
-
-**Alternative Cache Clear:**
-If the API-based cache clear doesn't work, you may need to:
-1. Check PrestaShop permissions for API user
-2. Use manual cache clearing in PrestaShop admin
-3. Verify cache directory write permissions
-
-### 🔍 Debug Mode
-
-Enable debug logging in Claude Desktop configuration:
-```json
-{
-  "mcpServers": {
-    "prestashop": {
-      "command": "path/to/python",
-      "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
-      "cwd": "path/to/prestashop-mcp",
-      "env": {
-        "PRESTASHOP_SHOP_URL": "https://your-shop.example.com",
-        "PRESTASHOP_API_KEY": "YOUR_API_KEY",
-        "LOG_LEVEL": "DEBUG"
-      }
-    }
-  }
-}
-```
-
-## 📊 Project Structure
-
-```
-prestashop-mcp/
-├── src/prestashop_mcp/                  # Main Package
-│   ├── prestashop_mcp_server.py         # MCP Server (Extended)
-│   ├── prestashop_client.py             # PrestaShop API Client (Extended)
-│   ├── config.py                        # Configuration Management
-│   └── cli.py                          # Command Line Interface
-├── tests/                               # All Tests
-│   ├── test_config.py                   # Unit Tests
-│   └── test_crud_operations.py          # CRUD Integration Tests
-├── venv_prestashop/                     # Virtual Environment (after setup)
-├── README.md                            # Documentation
-├── CHANGELOG.md                         # Version History
-├── pyproject.toml                       # Package Configuration
-└── requirements.txt                     # All Dependencies
-```
-
-## 📖 API Documentation
-
-### PrestaShop API
-
-Complete PrestaShop API documentation:
-- **[PrestaShop DevDocs - Webservice](https://devdocs.prestashop-project.org/8/webservice/)**
-
-### Authentication
-
-```bash
-curl -u "API_KEY:" https://your-shop.com/api/configurations?output_format=JSON
-```
-
-### Important Endpoints
-
-- **Products**: `/api/products`
-- **Categories**: `/api/categories`
-- **Customers**: `/api/customers`
-- **Orders**: `/api/orders`
-- **Stock**: `/api/stock_availables`
-- **Order Status**: `/api/order_states`
-- **Modules**: `/api/modules` **NEW**
-- **Configurations**: `/api/configurations` **NEW**
-
-## 🧪 Development
-
-### 🏗️ Development Environment
-
-```bash
-# Activate virtual environment
-source venv_prestashop/bin/activate  # Linux/macOS
-.\venv_prestashop\Scripts\Activate.ps1  # Windows
-
-# All dependencies (including test dependencies) are in requirements.txt
-pip install -r requirements.txt
-
-# Run tests
-pytest
-
-# Run tests with coverage
-pytest --cov=src/prestashop_mcp --cov-report=html
-
-# Run comprehensive integration tests
-python tests/test_crud_operations.py
-```
-
-## 📖 Resources
-
-- **[PrestaShop Official Documentation](https://devdocs.prestashop-project.org/)**
-- **[Model Context Protocol Specification](https://modelcontextprotocol.io/)**
-- **[Claude Desktop MCP Integration](https://docs.anthropic.com/)**
-- **[GitHub Repository](https://github.com/latinogino/prestashop-mcp)**
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details.
-
-## 📝 Changelog
-
-See [CHANGELOG.md](CHANGELOG.md) for a detailed history of changes.
-
-## 🏗️ Project Status & Development Notes
-
-### 📋 **Maintenance Status**
-
-**⚠️ Limited Maintenance**: I currently do not plan to actively maintain this repository. The PrestaShop MCP Server was rather a test of how an MCP server can be created without significant own programming experience and largely based on LLMs and MCPs.
-
-### 🧪 **Experimental Nature**
-
-This project served as a **Proof of Concept** for:
-- **LLM-Assisted Development**: Development of complex software integration solutions with minimal manual programming
-- **MCP Server Architecture**: Practical implementation of the Model Context Protocol specification
-- **AI-Driven E-Commerce Integration**: Automated PrestaShop management through natural language
-- **No-Code/Low-Code Approach**: Maximum use of AI tools for professional software development
-
-### 🐳 **Planned Docker Distribution**
-
-**Upcoming Features:**
-It is still planned to provide the entire MCP server as a **ready-made Docker container** as soon as all functions are implemented as desired.
-
-**Benefits of Docker deployment:**
-- ✅ **Zero-Configuration Setup**: Easy installation without complex Python environment
-- ✅ **Consistent Environment**: Identical behavior on all platforms
-- ✅ **Isolated Dependencies**: No conflicts with local Python installations
-- ✅ **Production-Ready**: Optimized for productive use
-- ✅ **Auto-Updates**: Easy update to new versions
-
-**Planned Docker usage:**
-```bash
-# Future Docker installation (planned)
-docker pull latinogino/prestashop-mcp:latest
-docker run -e PRESTASHOP_SHOP_URL=https://your-shop.com \
-           -e PRESTASHOP_API_KEY=your-key \
-           -p 8080:8080 \
-           latinogino/prestashop-mcp:latest
-```
-
----
-
-**🎯 Manage your complete PrestaShop store including modules, cache, themes, and navigation through natural language with Claude Desktop!**
+## 13. Seguridad
+
+- No subas `.env` a Git.
+- Usa una clave de Webservice con los permisos minimos necesarios.
+- Empieza con permisos `GET` y amplia solo cuando necesites escribir.
+- Revisa las acciones de escritura antes de aprobarlas desde el cliente.
+- Haz copia de seguridad de la tienda antes de probar acciones masivas.
+
+## 14. Referencias
+
+- Repositorio del fork: https://github.com/golfo161/prestashop-local-mcp
+- Repositorio original: https://github.com/latinogino/prestashop-mcp
+- Documentacion de PrestaShop Webservice: https://devdocs.prestashop-project.org/
+- OpenAI Help: Developer mode and MCP apps in ChatGPT: https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt
