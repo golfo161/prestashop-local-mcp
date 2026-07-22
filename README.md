@@ -2,6 +2,138 @@
 
 A professional Model Context Protocol (MCP) Server for complete management of PrestaShop e-commerce stores with **extended functionality**.
 
+## Guia rapida: Windows + Codex en ChatGPT Desktop
+
+Esta guia deja el MCP funcionando en local con Codex dentro de ChatGPT Desktop. El servidor se ejecuta en tu ordenador mediante `stdio` y Codex lo arranca desde `config.toml`.
+
+> Nota importante sobre ChatGPT Apps: ChatGPT no se conecta directamente a servidores MCP locales `stdio`. Para usarlo como app MCP de ChatGPT fuera de Codex necesitas exponerlo como servidor MCP remoto o usar Secure MCP Tunnel. La configuracion local siguiente es para Codex/ChatGPT Desktop.
+
+### 1. Clonar el repositorio
+
+```powershell
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
+git clone https://github.com/golfo161/prestashop-local-mcp.git PRESTASHOP-LOCAL-MCP
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+```
+
+Si no tienes `git` instalado, descarga el ZIP del repositorio desde GitHub y descomprimelo como `PRESTASHOP-LOCAL-MCP`.
+
+### 2. Crear el entorno virtual
+
+```powershell
+python -m venv venv_prestashop
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv_prestashop\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+pip install -e .
+```
+
+Comprueba que la instalacion carga:
+
+```powershell
+python -c "import prestashop_mcp; print('Installation successful')"
+```
+
+### 3. Crear el fichero `.env`
+
+Crea este fichero en la raiz del proyecto:
+
+```text
+C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP\.env
+```
+
+Contenido:
+
+```env
+PRESTASHOP_SHOP_URL=https://tu-tienda.com
+PRESTASHOP_API_KEY=TU_API_KEY_DE_PRESTASHOP
+LOG_LEVEL=INFO
+```
+
+La clave debe estar activa en PrestaShop, con el Webservice habilitado y permisos sobre los recursos que quieras usar. Para una prueba inicial de lectura, activa al menos `GET` en `configurations`, `products`, `categories`, `customers`, `orders`, `stock_availables` y `languages`.
+
+### 4. Probar la API de PrestaShop
+
+En algunos alojamientos la cabecera `Authorization` no llega a PrestaShop. Este fork usa `ws_key`, que evita ese problema.
+
+```powershell
+$key = (Get-Content .env | Where-Object { $_ -like "PRESTASHOP_API_KEY=*" }).Split("=",2)[1]
+Invoke-WebRequest -Uri "https://tu-tienda.com/api/configurations?output_format=JSON&ws_key=$key" -UseBasicParsing
+```
+
+El resultado esperado es `StatusCode : 200`.
+
+### 5. Ejecutar el MCP local por primera vez
+
+Desde PowerShell:
+
+```powershell
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv_prestashop\Scripts\Activate.ps1
+.\venv_prestashop\Scripts\prestashop-mcp.exe --log-level DEBUG
+```
+
+Si todo esta bien, veras algo parecido a:
+
+```text
+Testing API connection with extended functionality...
+API connection successful with extended functionality
+Starting Enhanced PrestaShop MCP server...
+Server ready with full CRUD operations + Navigation Tree management
+```
+
+Puedes parar el servidor con `Ctrl+C`. Para uso desde Codex no hace falta dejarlo abierto: Codex lo arrancara automaticamente cuando lea su configuracion.
+
+### 6. Crear el fichero de configuracion para Codex en ChatGPT Desktop
+
+El fichero persistente de Codex esta en:
+
+```text
+C:\Users\TU_USUARIO\.codex\config.toml
+```
+
+Anade este bloque al final, cambiando `TU_USUARIO` y la ruta si corresponde:
+
+```toml
+[mcp_servers.prestashop]
+command = 'C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP\venv_prestashop\Scripts\python.exe'
+args = ['-m', 'prestashop_mcp.prestashop_mcp_server']
+cwd = 'C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP'
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+default_tools_approval_mode = 'writes'
+```
+
+No pongas la API key en `config.toml`: el servidor la lee desde el `.env` del proyecto.
+
+Despues de guardar `config.toml`, reinicia ChatGPT Desktop/Codex o abre una nueva tarea para que cargue el MCP.
+
+### 7. Probar desde Codex
+
+En una tarea nueva pide:
+
+```text
+Usa el MCP de prestashop para probar la conexion.
+```
+
+Pruebas seguras de lectura:
+
+```text
+Lista 5 productos de la tienda.
+Muestra las categorias principales.
+Dame informacion general de la tienda.
+```
+
+Evita al principio acciones de escritura como crear, actualizar, borrar productos o limpiar cache hasta confirmar que las lecturas funcionan.
+
+### 8. Actualizaciones del modulo y reconexion
+
+Si cambias ficheros del modulo, especialmente `src/prestashop_mcp/prestashop_mcp_server.py` o cualquier definicion de herramientas, reinicia ChatGPT Desktop/Codex o abre una nueva tarea para que Codex vuelva a arrancar el MCP y lea las herramientas actualizadas.
+
+Si lo conectas como una app MCP de ChatGPT remoto, los cambios en herramientas no se aplican automaticamente: hay que usar `Refresh`/`Scan Tools` y, si la app esta publicada en un workspace, revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app segun el estado de la beta.
+
 ## 🚀 Overview
 
 This MCP Server enables complete management of your PrestaShop store through AI applications like Claude Desktop. With specialized tools, you can manage all aspects of your e-commerce business - from products and categories to customers, orders, **modules, cache, themes, and navigation menus**.
