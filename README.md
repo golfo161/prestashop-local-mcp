@@ -13,6 +13,7 @@ Herramientas principales:
 - `test_connection`: prueba la conexion con la API de PrestaShop.
 - `get_shop_info`: muestra informacion general de la tienda.
 - `get_products`: lista y consulta productos.
+- `get_products_by_category`: lista productos asociados a una categoria, aunque no sea su categoria por defecto.
 - `create_product`, `update_product`, `delete_product`: gestion de productos.
 - `update_product_stock`, `update_product_price`: cambios de stock y precio.
 - `get_categories`, `create_category`, `update_category`, `delete_category`: gestion de categorias.
@@ -197,6 +198,7 @@ Pruebas seguras:
 Lista 5 productos de la tienda.
 Muestra las categorias principales.
 Dame informacion general de la tienda.
+Lista los 10 primeros productos de la categoria AGOTADOS usando get_products_by_category.
 ```
 
 ## 9. Configurar Claude Desktop
@@ -245,9 +247,46 @@ Luego prueba lecturas:
 List 5 products from my PrestaShop store.
 Show the main categories.
 Get general shop information.
+Use prestashop:get_products_by_category for category AGOTADOS and return 10 products.
 ```
 
-## 10. ChatGPT Apps y MCP remoto
+## 10. Buscar productos por categoria real
+
+PrestaShop permite que un producto este asociado a varias categorias. La herramienta `get_products` filtra por `id_category_default`, por lo que puede no encontrar productos que pertenecen a una categoria secundaria.
+
+Para esos casos usa `get_products_by_category`.
+
+Ejemplos:
+
+```text
+Lista los 10 primeros productos de la categoria AGOTADOS.
+```
+
+```text
+Usa get_products_by_category con category_name="AGOTADOS" y limit=10.
+```
+
+```text
+Usa get_products_by_category con category_id="145", limit=10 y scan_limit=1000.
+```
+
+Parametros:
+
+- `category_id`: ID de categoria. Es la opcion mas exacta y rapida.
+- `category_name`: nombre exacto de la categoria, por ejemplo `AGOTADOS`.
+- `limit`: numero maximo de productos que quieres recibir.
+- `scan_limit`: numero maximo de productos que el MCP escanea para encontrar asociaciones. Sube este valor si la tienda tiene muchos productos y no aparecen suficientes resultados.
+
+La respuesta incluye:
+
+- datos de la categoria encontrada
+- lista de productos coincidentes
+- `scanned_products`: cuantos productos se revisaron
+- `scan_limit`: limite usado para la busqueda
+
+Nota: esta herramienta es de solo lectura.
+
+## 11. ChatGPT Apps y MCP remoto
 
 ChatGPT Apps no se conecta directamente a servidores MCP locales `stdio`. Para usar este MCP como app de ChatGPT fuera de Codex, debes exponerlo como servidor MCP remoto o usar Secure MCP Tunnel.
 
@@ -257,7 +296,7 @@ Resumen:
 - Claude Desktop: usa `C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json`.
 - ChatGPT Apps: requiere MCP remoto o Secure MCP Tunnel.
 
-## 11. Actualizaciones y reconexion
+## 12. Actualizaciones y reconexion
 
 Si modificas ficheros del modulo, reinicia el cliente para que vuelva a cargar el servidor MCP.
 
@@ -273,7 +312,7 @@ En Codex o Claude Desktop, lo normal es cerrar y volver a abrir el cliente o ini
 
 En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automaticamente. Hay que refrescar o escanear herramientas otra vez. Si la app ya esta publicada en un workspace, un administrador debe revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app.
 
-## 12. Comandos utiles
+## 13. Comandos utiles
 
 Arrancar manualmente el MCP:
 
@@ -303,7 +342,7 @@ Ejecutar tests seguros:
 .\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py
 ```
 
-## 13. Seguridad
+## 14. Seguridad
 
 - No subas `.env` a Git.
 - Usa una clave de Webservice con los permisos minimos necesarios.
@@ -311,7 +350,7 @@ Ejecutar tests seguros:
 - Revisa las acciones de escritura antes de aprobarlas desde el cliente.
 - Haz copia de seguridad de la tienda antes de probar acciones masivas.
 
-## 14. Referencias
+## 15. Referencias
 
 - Repositorio del fork: https://github.com/golfo161/prestashop-local-mcp
 - Repositorio original: https://github.com/latinogino/prestashop-mcp

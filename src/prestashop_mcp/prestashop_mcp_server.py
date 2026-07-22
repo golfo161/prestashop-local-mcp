@@ -112,6 +112,20 @@ async def handle_list_tools():
             }
         ),
         Tool(
+            name="get_products_by_category",
+            description="List products associated with a category by ID or name, including secondary category associations",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "category_id": {"type": "string", "description": "Category ID to search"},
+                    "category_name": {"type": "string", "description": "Exact category name to search, for example AGOTADOS"},
+                    "limit": {"type": "integer", "description": "Maximum number of matching products to return", "default": 10},
+                    "scan_limit": {"type": "integer", "description": "Maximum number of products to scan while looking for category associations", "default": 500}
+                },
+                "additionalProperties": False
+            }
+        ),
+        Tool(
             name="create_product",
             description="Create a new product",
             inputSchema={
@@ -512,6 +526,14 @@ async def handle_call_tool(name: str, arguments: dict):
                     include_stock=arguments.get('include_stock', False),
                     include_category_info=arguments.get('include_category_info', False),
                     display=arguments.get('display')
+                )
+
+            elif name == "get_products_by_category":
+                result = await client.get_products_by_category(
+                    category_id=arguments.get('category_id'),
+                    category_name=arguments.get('category_name'),
+                    limit=arguments.get('limit', 10),
+                    scan_limit=arguments.get('scan_limit', 500)
                 )
             
             elif name == "create_product":
