@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Optimized `get_products_by_category` to avoid scanning the full product catalog.
+- `get_products_by_category` now combines default-category matches with category association data from `categories/{id}`.
+- Category name resolution is now accent-insensitive and case-insensitive as a fallback.
+
+### Fixed
+- Normalized PrestaShop list responses returned as direct arrays.
+
 ## [3.0.0] - 2025-06-30 - Extended Functionality (LATEST)
 
 ### Added

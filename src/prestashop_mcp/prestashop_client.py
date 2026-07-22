@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import re
+import unicodedata
 import xml.etree.ElementTree as ET
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
@@ -177,6 +178,8 @@ class PrestaShopClient:
 
     def _get_response_items(self, response: Dict[str, Any], singular: str, plural: str) -> List[Dict[str, Any]]:
         """Normalize PrestaShop JSON responses that may use singular or plural roots."""
+        if isinstance(response, list):
+            return response
         value = response.get(plural, response.get(singular, []))
         if isinstance(value, list):
             return value
@@ -197,6 +200,14 @@ class PrestaShopClient:
         if field is None:
             return ""
         return str(field)
+
+    def _normalize_search_text(self, value: str) -> str:
+        """Normalize user-facing text for accent-insensitive matching."""
+        normalized = unicodedata.normalize("NFD", value or "")
+        without_accents = "".join(
+            char for char in normalized if unicodedata.category(char) != "Mn"
+        )
+        return without_accents.strip().lower()
 
     def _summarize_product(self, product: Dict[str, Any]) -> Dict[str, Any]:
         """Return the fields most useful for category listings."""
@@ -277,9 +288,9 @@ class PrestaShopClient:
         Get products associated with a category, not only products whose default
         category matches.
 
-        PrestaShop product category membership lives inside each product's
-        associations, so this method scans product details until it finds the
-        requested number of matches.
+        Uses the category's product associations plus the fast
+        id_category_default filter. This avoids scanning every product in the
+        catalog.
         """
         if not category_id and not category_name:
             raise PrestaShopAPIError("category_id or category_name is required")
@@ -287,41 +298,43 @@ class PrestaShopClient:
         category = await self._resolve_category(category_id=category_id, category_name=category_name)
         resolved_category_id = str(category["id"])
 
-        product_ids_response = await self._make_request(
+        products_by_id: Dict[str, Dict[str, Any]] = {}
+        detail_fetches = 0
+
+        default_products_response = await self._make_request(
             "GET",
             "products",
-            params={"display": "[id]", "limit": scan_limit},
+            params={
+                "filter[id_category_default]": resolved_category_id,
+                "display": "[id,name,reference,price,quantity,active,id_category_default]",
+                "limit": limit,
+            },
         )
-        product_refs = self._get_response_items(product_ids_response, "product", "products")
+        for product in self._get_response_items(default_products_response, "product", "products"):
+            product_id = str(product.get("id") or "")
+            if product_id:
+                products_by_id[product_id] = self._summarize_product(product)
 
-        matches = []
-        scanned = 0
+        associated_products = category.get("associations", {}).get("products", []) or []
+        associated_product_ids = [
+            str(product.get("id"))
+            for product in associated_products
+            if product.get("id") is not None
+        ]
 
-        for product_ref in product_refs:
-            product_id = product_ref.get("id")
-            if not product_id:
+        for product_id in associated_product_ids:
+            if len(products_by_id) >= limit:
+                break
+            if product_id in products_by_id:
                 continue
 
-            scanned += 1
-            product_response = await self._make_request(
-                "GET",
-                f"products/{product_id}",
-                params={"display": "full"},
-            )
+            product_response = await self._make_request("GET", f"products/{product_id}")
+            detail_fetches += 1
             products = self._get_response_items(product_response, "product", "products")
-            if not products:
-                continue
+            if products:
+                products_by_id[product_id] = self._summarize_product(products[0])
 
-            product = products[0]
-            associated_category_ids = {
-                str(category.get("id"))
-                for category in product.get("associations", {}).get("categories", []) or []
-            }
-
-            if resolved_category_id in associated_category_ids:
-                matches.append(self._summarize_product(product))
-                if len(matches) >= limit:
-                    break
+        matches = list(products_by_id.values())[:limit]
 
         return {
             "category": {
@@ -331,9 +344,12 @@ class PrestaShopClient:
             },
             "products": matches,
             "count": len(matches),
-            "scanned_products": scanned,
+            "default_category_matches": len(self._get_response_items(default_products_response, "product", "products")),
+            "associated_product_ids": associated_product_ids,
+            "detail_fetches": detail_fetches,
+            "scanned_products": 0,
             "scan_limit": scan_limit,
-            "note": "Matches are based on product category associations, not only id_category_default.",
+            "note": "Matches combine product category associations and id_category_default without scanning the full catalog.",
         }
 
     async def _resolve_category(
@@ -356,7 +372,23 @@ class PrestaShopClient:
         )
         categories = self._get_response_items(response, "category", "categories")
         if categories:
+            found_category_id = categories[0].get("id")
+            if found_category_id:
+                return await self._resolve_category(category_id=str(found_category_id))
             return categories[0]
+
+        category_name_key = self._normalize_search_text(category_name or "")
+        fallback_response = await self._make_request(
+            "GET",
+            "categories",
+            params={"display": "[id,id_parent,name,active]", "limit": 1000},
+        )
+        for category in self._get_response_items(fallback_response, "category", "categories"):
+            if self._normalize_search_text(self._get_localized_value(category.get("name"))) == category_name_key:
+                found_category_id = category.get("id")
+                if found_category_id:
+                    return await self._resolve_category(category_id=str(found_category_id))
+                return category
 
         raise PrestaShopAPIError(f"Category named '{category_name}' not found")
     

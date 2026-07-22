@@ -256,6 +256,13 @@ PrestaShop permite que un producto este asociado a varias categorias. La herrami
 
 Para esos casos usa `get_products_by_category`.
 
+La herramienta resuelve la categoria por `category_id` o `category_name` y combina dos fuentes:
+
+- productos cuya categoria por defecto es la categoria solicitada
+- productos asociados directamente en `categories/{id}.associations.products`
+
+Esto evita escanear todo el catalogo producto por producto y hace que la respuesta sea rapida incluso en tiendas grandes.
+
 Ejemplos:
 
 ```text
@@ -267,22 +274,25 @@ Usa get_products_by_category con category_name="AGOTADOS" y limit=10.
 ```
 
 ```text
-Usa get_products_by_category con category_id="145", limit=10 y scan_limit=1000.
+Usa get_products_by_category con category_id="145" y limit=10.
 ```
 
 Parametros:
 
 - `category_id`: ID de categoria. Es la opcion mas exacta y rapida.
-- `category_name`: nombre exacto de la categoria, por ejemplo `AGOTADOS`.
+- `category_name`: nombre de la categoria, por ejemplo `AGOTADOS`. La busqueda tolera mayusculas/minusculas y acentos.
 - `limit`: numero maximo de productos que quieres recibir.
-- `scan_limit`: numero maximo de productos que el MCP escanea para encontrar asociaciones. Sube este valor si la tienda tiene muchos productos y no aparecen suficientes resultados.
+- `scan_limit`: parametro conservado por compatibilidad. La implementacion actual no escanea todo el catalogo.
 
 La respuesta incluye:
 
 - datos de la categoria encontrada
 - lista de productos coincidentes
-- `scanned_products`: cuantos productos se revisaron
-- `scan_limit`: limite usado para la busqueda
+- `default_category_matches`: productos encontrados por categoria por defecto
+- `associated_product_ids`: productos asociados desde la categoria
+- `detail_fetches`: productos asociados que requirieron consulta individual
+- `scanned_products`: siempre `0` en la implementacion optimizada
+- `scan_limit`: valor recibido por compatibilidad
 
 Nota: esta herramienta es de solo lectura.
 

@@ -61,15 +61,15 @@ class SequenceClient(PrestaShopClient):
 async def test_get_products_by_category_uses_category_associations():
     client = SequenceClient([
         {"categories": [{"id": 145, "name": [{"id": "1", "value": "AGOTADOS"}], "active": "0"}]},
-        {"products": [{"id": 8}, {"id": 9}]},
         {
-            "products": [{
-                "id": 8,
-                "name": [{"id": "1", "value": "Other product"}],
-                "id_category_default": "15",
-                "associations": {"categories": [{"id": "15"}]},
+            "categories": [{
+                "id": 145,
+                "name": [{"id": "1", "value": "AGOTADOS"}],
+                "active": "0",
+                "associations": {"products": [{"id": "9"}]},
             }]
         },
+        {"products": []},
         {
             "products": [{
                 "id": 9,
@@ -97,8 +97,11 @@ async def test_get_products_by_category_uses_category_associations():
         "id_category_default": "15",
         "associated_category_ids": ["15", "145"],
     }]
-    assert result["scanned_products"] == 2
+    assert result["detail_fetches"] == 1
+    assert result["scanned_products"] == 0
     assert client.requests[0]["params"]["filter[name]"] == "[AGOTADOS]"
+    assert client.requests[1]["endpoint"] == "categories/145"
+    assert client.requests[2]["params"]["filter[id_category_default]"] == "145"
 
 
 @pytest.mark.asyncio
