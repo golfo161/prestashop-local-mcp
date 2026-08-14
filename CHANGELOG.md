@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- README now explains that GitHub generates `main.zip` on demand, that `pip` installs the MCP under `venv\Lib\site-packages`, and when to use assisted `.bat` launchers versus manual `py -m` commands.
 - README now maps `prestashop-local-mcp ...` and `prestashop-mcp ...` commands to Windows-safe `py -m prestashop_mcp.cli ...` equivalents.
 - README now recommends Git-free installation from the GitHub ZIP archive for non-technical users.
 - Package metadata now targets the `golfo161/prestashop-local-mcp` fork.

@@ -71,6 +71,20 @@ Invoke-WebRequest -Uri "https://raw.githubusercontent.com/golfo161/prestashop-lo
 py "$env:TEMP\prestashop-local-mcp-install.py"
 ```
 
+Este primer comando descarga solamente el instalador desde GitHub:
+
+```text
+https://raw.githubusercontent.com/golfo161/prestashop-local-mcp/main/scripts/install_windows.py
+```
+
+Despues, el instalador usa esta URL para instalar el MCP completo:
+
+```text
+https://github.com/golfo161/prestashop-local-mcp/archive/refs/heads/main.zip
+```
+
+Ese ZIP no aparece como fichero dentro del repositorio. GitHub lo genera automaticamente con el contenido actual de la rama `main`, igual que cuando pulsas `Code` -> `Download ZIP`.
+
 El instalador preguntara:
 
 1. La carpeta donde quieres instalar el MCP.
@@ -97,12 +111,23 @@ prestashop-local-mcp\
   uninstall-mcp.bat
 ```
 
-Los ficheros Python del MCP instalados por `pip` quedan dentro del entorno virtual:
+Los ficheros Python del MCP instalados por `pip` quedan dentro del entorno virtual, no como una carpeta `src` visible en la raiz de la instalacion:
 
 ```text
 venv\Lib\site-packages\prestashop_mcp\prestashop_client.py
 venv\Lib\site-packages\prestashop_mcp\prestashop_mcp_server.py
 ```
+
+Flujo interno de la instalacion:
+
+1. El instalador crea `venv\` dentro de la carpeta elegida.
+2. Actualiza `pip` dentro de ese entorno virtual.
+3. `pip` descarga temporalmente el ZIP de GitHub.
+4. `pip` lee `pyproject.toml`.
+5. `pip` instala las dependencias.
+6. `pip` copia el paquete Python dentro de `venv\Lib\site-packages\prestashop_mcp\`.
+7. El instalador crea los `.bat` y `README-INSTALACION.txt`.
+8. El instalador lanza el asistente `setup` desde el Python del entorno virtual.
 
 Los `.bat` sirven para arrancar el MCP manualmente, volver a configurar la conexion, actualizar desde GitHub o desinstalar la carpeta local.
 
@@ -119,7 +144,7 @@ Comprueba que el modulo existe:
 py -m prestashop_mcp.cli --help
 ```
 
-En Windows usa siempre `py -m prestashop_mcp.cli ...` para ejecutar el MCP. Esta forma no depende de que la carpeta `Scripts` de Python este en el `PATH`.
+En una instalacion manual, usa `py -m prestashop_mcp.cli ...` para ejecutar el MCP. Esta forma no depende de que la carpeta `Scripts` de Python este en el `PATH`, pero si depende de que el paquete este instalado en el Python que usa el lanzador `py`.
 
 Equivalencias de comandos:
 
@@ -135,7 +160,13 @@ Los comandos `prestashop-local-mcp` y `prestashop-mcp` se mantienen como atajos 
 
 ### Auto-deploy asistido
 
-Despues de instalar, ejecuta:
+Si usas el instalador asistido de Windows, este paso se ejecuta automaticamente al final de la instalacion. Si necesitas repetirlo mas adelante, usa el fichero creado en la carpeta elegida:
+
+```powershell
+.\setup-mcp.bat
+```
+
+Si hiciste una instalacion manual con `pip`, ejecuta:
 
 ```powershell
 py -m prestashop_mcp.cli setup
@@ -155,12 +186,14 @@ El asistente hace todo el despliegue local:
 
 El asistente no copia la API key en Codex ni Claude Desktop. La clave solo queda en el fichero local `.env` del usuario.
 
-Si ya has ejecutado `setup` y solo quieres reinstalar la conexion con un cliente:
+Si ya has ejecutado `setup` y solo quieres reinstalar la conexion con un cliente desde una instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli install-codex
 py -m prestashop_mcp.cli install-claude
 ```
+
+Si usaste el instalador asistido, puedes ejecutar `setup-mcp.bat` otra vez y elegir el cliente que quieras conectar.
 
 ### Instalacion alternativa con Git
 
@@ -186,7 +219,7 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-Si PowerShell no permite activar el entorno virtual, puedes ejecutar el binario del MCP directamente desde `venv_prestashop\Scripts` sin activar nada.
+Si PowerShell no permite activar el entorno virtual, puedes ejecutar el modulo con el Python del entorno virtual sin activar nada.
 
 Comprueba que el paquete carga:
 
@@ -197,6 +230,14 @@ py -c "import prestashop_mcp; print('Installation successful')"
 ## 5. Crear el fichero de configuracion `.env`
 
 La forma recomendada es usar el asistente completo. Pregunta la URL de la tienda, la clave del Webservice, crea el fichero local de configuracion y puede conectar el MCP con Codex o Claude Desktop sin copiar rutas manualmente.
+
+Si usaste el instalador asistido:
+
+```powershell
+.\setup-mcp.bat
+```
+
+Si hiciste una instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli setup
@@ -214,9 +255,19 @@ Ese fichero queda fuera del repositorio y es la opcion mas segura para distribui
 
 Si solo quieres crear el `.env` y no conectar ningun cliente todavia:
 
+Instalacion asistida, desde la carpeta elegida:
+
+```powershell
+.\venv\Scripts\python.exe -m prestashop_mcp.cli init
+```
+
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli init
 ```
+
+Si usas `setup-mcp.bat`, el asistente tambien puede reinstalar la conexion con Codex o Claude Desktop.
 
 ### Configuracion manual
 
@@ -248,7 +299,13 @@ LOG_LEVEL=INFO
 
 Esta prueba confirma que PrestaShop acepta la clave antes de arrancar el MCP.
 
-Con el comando asistido:
+Con instalacion asistida, desde la carpeta elegida:
+
+```powershell
+.\venv\Scripts\python.exe -m prestashop_mcp.cli doctor
+```
+
+Con instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli doctor
@@ -274,7 +331,13 @@ Si recibes `401 Unauthorized`, revisa que el Webservice este activo, que la clav
 
 Esta prueba arranca el servidor MCP manualmente. Sirve para comprobar que el modulo funciona antes de conectarlo a un cliente.
 
-Si instalaste desde GitHub:
+Si usaste el instalador asistido, abre la carpeta elegida y ejecuta:
+
+```powershell
+.\start-mcp.bat
+```
+
+Si hiciste una instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli --log-level DEBUG
@@ -324,13 +387,13 @@ Edita o crea este fichero:
 C:\Users\TU_USUARIO\.codex\config.toml
 ```
 
-Copia este bloque al final del archivo y cambia `TU_USUARIO` por tu usuario real:
+Si usaste el instalador asistido, el bloque tendra una forma parecida a esta. Cambia `TU_USUARIO` y `CARPETA_ELEGIDA` por tus rutas reales:
 
 ```toml
 [mcp_servers.prestashop]
-command = 'C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP\venv_prestashop\Scripts\python.exe'
+command = 'C:\Users\TU_USUARIO\CARPETA_ELEGIDA\venv\Scripts\python.exe'
 args = ['-m', 'prestashop_mcp.prestashop_mcp_server']
-cwd = 'C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP'
+cwd = 'C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp'
 startup_timeout_sec = 30
 tool_timeout_sec = 120
 default_tools_approval_mode = 'writes'
@@ -340,12 +403,14 @@ Que hace cada campo:
 
 - `command`: Python del entorno virtual que arrancara el MCP.
 - `args`: modulo Python del servidor MCP.
-- `cwd`: carpeta del proyecto; desde aqui se lee el `.env`.
+- `cwd`: carpeta local de configuracion del usuario. El `.env` seguro se guarda ahi.
 - `startup_timeout_sec`: tiempo maximo para arrancar.
 - `tool_timeout_sec`: tiempo maximo para ejecutar una herramienta.
 - `default_tools_approval_mode = 'writes'`: pide aprobacion para acciones de escritura o modificacion.
 
 No pongas la API key en `config.toml`; se lee desde `.env`.
+
+Si trabajas desde un clon de desarrollo, entonces `command` debe apuntar a `venv_prestashop\Scripts\python.exe` y `cwd` puede ser la carpeta del repositorio.
 
 Despues de guardar el archivo, reinicia ChatGPT Desktop/Codex o abre una nueva tarea.
 
@@ -386,15 +451,15 @@ Edita o crea este fichero:
 C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json
 ```
 
-Copia este contenido, adaptando `TU_USUARIO`:
+Copia este contenido, adaptando `TU_USUARIO` y `CARPETA_ELEGIDA`:
 
 ```json
 {
   "mcpServers": {
     "prestashop": {
-      "command": "C:\\Users\\TU_USUARIO\\OneDrive\\Documentos\\PYTHON\\PRESTASHOP-LOCAL-MCP\\venv_prestashop\\Scripts\\python.exe",
+      "command": "C:\\Users\\TU_USUARIO\\CARPETA_ELEGIDA\\venv\\Scripts\\python.exe",
       "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
-      "cwd": "C:\\Users\\TU_USUARIO\\OneDrive\\Documentos\\PYTHON\\PRESTASHOP-LOCAL-MCP"
+      "cwd": "C:\\Users\\TU_USUARIO\\AppData\\Roaming\\prestashop-local-mcp"
     }
   }
 }
@@ -404,9 +469,11 @@ Que hace cada campo:
 
 - `command`: Python del entorno virtual que arrancara el MCP.
 - `args`: modulo Python del servidor MCP.
-- `cwd`: carpeta del proyecto; desde aqui se lee el `.env`.
+- `cwd`: carpeta local de configuracion del usuario. El `.env` seguro se guarda ahi.
 
-No pongas la API key en el JSON si ya tienes `.env` en el proyecto.
+No pongas la API key en el JSON; se lee desde el `.env` seguro del usuario.
+
+Si trabajas desde un clon de desarrollo, entonces `command` debe apuntar a `venv_prestashop\Scripts\python.exe` y `cwd` puede ser la carpeta del repositorio.
 
 Despues de guardar el archivo, cierra Claude Desktop completamente y vuelve a abrirlo.
 
@@ -499,7 +566,7 @@ En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automatica
 
 ## 13. Comandos utiles
 
-En Windows usa preferentemente `py -m prestashop_mcp.cli ...`. Los ejemplos con `prestashop-local-mcp ...` solo funcionan si la carpeta `Scripts` de Python esta en el `PATH`.
+En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. Los ejemplos con `prestashop-local-mcp ...` solo funcionan si la carpeta `Scripts` de Python esta en el `PATH`.
 
 Instalacion asistida con carpeta elegida por el usuario:
 
@@ -510,17 +577,53 @@ py "$env:TEMP\prestashop-local-mcp-install.py"
 
 Arrancar manualmente el MCP:
 
+Instalacion asistida:
+
+```powershell
+.\start-mcp.bat
+```
+
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli --log-level DEBUG
 ```
 
 Asistente de configuracion:
 
+Instalacion asistida:
+
+```powershell
+.\setup-mcp.bat
+```
+
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli setup
 ```
 
+Actualizar instalacion asistida:
+
+```powershell
+.\update-mcp.bat
+```
+
+Desinstalar instalacion asistida:
+
+```powershell
+.\uninstall-mcp.bat
+```
+
 Crear solo el fichero de credenciales:
+
+Instalacion asistida:
+
+```powershell
+.\venv\Scripts\python.exe -m prestashop_mcp.cli init
+```
+
+Instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli init
@@ -528,11 +631,27 @@ py -m prestashop_mcp.cli init
 
 Diagnostico:
 
+Instalacion asistida:
+
+```powershell
+.\venv\Scripts\python.exe -m prestashop_mcp.cli doctor
+```
+
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli doctor
 ```
 
 Mostrar ruta del fichero seguro de configuracion:
+
+Instalacion asistida:
+
+```powershell
+.\venv\Scripts\python.exe -m prestashop_mcp.cli show-config-path
+```
+
+Instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli show-config-path
@@ -540,11 +659,15 @@ py -m prestashop_mcp.cli show-config-path
 
 Generar configuracion para Codex:
 
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli print-codex-config
 ```
 
 Instalar configuracion para Codex:
+
+Instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli install-codex
@@ -552,11 +675,15 @@ py -m prestashop_mcp.cli install-codex
 
 Generar configuracion para Claude Desktop:
 
+Instalacion manual con `pip`:
+
 ```powershell
 py -m prestashop_mcp.cli print-claude-config
 ```
 
 Instalar configuracion para Claude Desktop:
+
+Instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli install-claude
