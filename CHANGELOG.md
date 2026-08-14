@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Windows assisted installer script that lets users choose the local installation folder, creates a virtual environment, installs dependencies, and launches setup.
+- Windows installer now creates `README-INSTALACION.txt`, `start-mcp.bat`, `setup-mcp.bat`, `update-mcp.bat`, and `uninstall-mcp.bat` in the selected installation folder.
 - Interactive setup wizard via `prestashop-local-mcp init`.
 - Full assisted setup via `prestashop-local-mcp setup`.
 - Automatic Codex configuration installer via `prestashop-local-mcp install-codex`.

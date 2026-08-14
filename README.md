@@ -85,6 +85,27 @@ El codigo y el entorno virtual quedan en la carpeta elegida. Las credenciales se
 C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
 ```
 
+La carpeta elegida tendra una estructura parecida a esta:
+
+```text
+prestashop-local-mcp\
+  venv\
+  README-INSTALACION.txt
+  start-mcp.bat
+  setup-mcp.bat
+  update-mcp.bat
+  uninstall-mcp.bat
+```
+
+Los ficheros Python del MCP instalados por `pip` quedan dentro del entorno virtual:
+
+```text
+venv\Lib\site-packages\prestashop_mcp\prestashop_client.py
+venv\Lib\site-packages\prestashop_mcp\prestashop_mcp_server.py
+```
+
+Los `.bat` sirven para arrancar el MCP manualmente, volver a configurar la conexion, actualizar desde GitHub o desinstalar la carpeta local.
+
 Si prefieres instalar manualmente el paquete desde el ZIP de GitHub, puedes hacerlo asi. Esta opcion tampoco requiere Git y `pip` instala tambien las dependencias necesarias.
 
 ```powershell
