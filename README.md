@@ -69,25 +69,25 @@ py -m pip install --upgrade pip
 py -m pip install "https://github.com/golfo161/prestashop-local-mcp/archive/refs/heads/main.zip"
 ```
 
-Comprueba que el comando existe:
+Comprueba que el modulo existe:
 
 ```powershell
 py -m prestashop_mcp.cli --help
 ```
 
-En Windows esta es la forma mas fiable de ejecutar el asistente, porque no depende de que la carpeta `Scripts` de Python este en el `PATH`.
+En Windows usa siempre `py -m prestashop_mcp.cli ...` para ejecutar el MCP. Esta forma no depende de que la carpeta `Scripts` de Python este en el `PATH`.
 
-Si Windows reconoce el comando corto, tambien puedes usar:
+Equivalencias de comandos:
 
-```powershell
-prestashop-local-mcp --help
-```
+| Si ves este comando | En Windows ejecuta este |
+| --- | --- |
+| `prestashop-local-mcp --help` | `py -m prestashop_mcp.cli --help` |
+| `prestashop-mcp --help` | `py -m prestashop_mcp.cli --help` |
+| `prestashop-local-mcp setup` | `py -m prestashop_mcp.cli setup` |
+| `prestashop-local-mcp install-codex` | `py -m prestashop_mcp.cli install-codex` |
+| `prestashop-local-mcp install-claude` | `py -m prestashop_mcp.cli install-claude` |
 
-El comando antiguo tambien se mantiene por compatibilidad si esta disponible en el `PATH`:
-
-```powershell
-prestashop-mcp --help
-```
+Los comandos `prestashop-local-mcp` y `prestashop-mcp` se mantienen como atajos de compatibilidad, pero solo funcionaran si Python ha dejado sus scripts accesibles en el `PATH`.
 
 ### Auto-deploy asistido
 
