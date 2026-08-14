@@ -2,7 +2,7 @@
 
 Servidor MCP local para gestionar una tienda PrestaShop desde clientes compatibles con Model Context Protocol.
 
-Este fork esta adaptado para alojamientos donde la cabecera `Authorization` no llega correctamente a PrestaShop. En lugar de depender de Basic Auth, el cliente envia la clave del Webservice como parametro `ws_key`, que es compatible con la API de PrestaShop.
+Esta distribucion esta adaptada para alojamientos donde la cabecera `Authorization` no llega correctamente a PrestaShop. En lugar de depender de Basic Auth, el cliente envia la clave del Webservice como parametro `ws_key`, que es compatible con la API de PrestaShop.
 
 ## 1. Overview
 
@@ -151,12 +151,11 @@ Equivalencias de comandos:
 | Si ves este comando | En Windows ejecuta este |
 | --- | --- |
 | `prestashop-local-mcp --help` | `py -m prestashop_mcp.cli --help` |
-| `prestashop-mcp --help` | `py -m prestashop_mcp.cli --help` |
 | `prestashop-local-mcp setup` | `py -m prestashop_mcp.cli setup` |
 | `prestashop-local-mcp install-codex` | `py -m prestashop_mcp.cli install-codex` |
 | `prestashop-local-mcp install-claude` | `py -m prestashop_mcp.cli install-claude` |
 
-Los comandos `prestashop-local-mcp` y `prestashop-mcp` se mantienen como atajos de compatibilidad, pero solo funcionaran si Python ha dejado sus scripts accesibles en el `PATH`.
+El comando publicado por este proyecto es `prestashop-local-mcp`. Tambien puedes usar `py -m prestashop_mcp.cli ...`, que suele ser mas fiable en Windows.
 
 ### Auto-deploy asistido
 
@@ -215,8 +214,7 @@ py -m venv venv_prestashop
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\venv_prestashop\Scripts\Activate.ps1
 py -m pip install --upgrade pip
-pip install -r requirements.txt
-pip install -e .
+pip install -e ".[dev]"
 ```
 
 Si PowerShell no permite activar el entorno virtual, puedes ejecutar el modulo con el Python del entorno virtual sin activar nada.
@@ -357,8 +355,8 @@ Salida esperada:
 ```text
 Testing API connection with extended functionality...
 API connection successful with extended functionality
-Starting Enhanced PrestaShop MCP server...
-Server ready with full CRUD operations + Navigation Tree management
+Starting PrestaShop Local MCP server...
+Server ready
 ```
 
 Para detenerlo, pulsa `Ctrl+C`.
@@ -566,7 +564,7 @@ En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automatica
 
 ## 13. Comandos utiles
 
-En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. Los ejemplos con `prestashop-local-mcp ...` solo funcionan si la carpeta `Scripts` de Python esta en el `PATH`.
+En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. El comando `prestashop-local-mcp ...` solo funciona si la carpeta `Scripts` de Python esta en el `PATH`.
 
 Instalacion asistida con carpeta elegida por el usuario:
 
@@ -714,7 +712,7 @@ Ver ayuda:
 Ejecutar tests seguros:
 
 ```powershell
-.\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py
+.\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py tests\test_cli.py tests\test_windows_installer.py
 ```
 
 ## 14. Seguridad
@@ -725,9 +723,9 @@ Ejecutar tests seguros:
 - Revisa las acciones de escritura antes de aprobarlas desde el cliente.
 - Haz copia de seguridad de la tienda antes de probar acciones masivas.
 
-## 15. Referencias
+## 15. Referencias y creditos
 
-- Repositorio del fork: https://github.com/golfo161/prestashop-local-mcp
-- Repositorio original: https://github.com/latinogino/prestashop-mcp
+- Repositorio del proyecto: https://github.com/golfo161/prestashop-local-mcp
+- Basado originalmente en: https://github.com/latinogino/prestashop-mcp
 - Documentacion de PrestaShop Webservice: https://devdocs.prestashop-project.org/
 - OpenAI Help: Developer mode and MCP apps in ChatGPT: https://help.openai.com/en/articles/12584461-developer-mode-and-mcp-apps-in-chatgpt

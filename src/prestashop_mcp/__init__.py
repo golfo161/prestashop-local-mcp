@@ -1,7 +1,4 @@
-"""PrestaShop MCP Server - Professional E-commerce Integration
-
-A Model Context Protocol server for complete PrestaShop e-commerce management.
-"""
+"""PrestaShop Local MCP package."""
 
 __version__ = "3.1.0"
 __author__ = "golfo161"

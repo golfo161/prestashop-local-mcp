@@ -195,9 +195,9 @@ def init(config_file: Path, force: bool, skip_test: bool):
 
     click.echo("")
     click.echo("Next steps:")
-    click.echo("  prestashop-local-mcp setup")
-    click.echo("  prestashop-local-mcp doctor")
-    click.echo("  prestashop-local-mcp install-codex")
+    click.echo("  python -m prestashop_mcp.cli setup")
+    click.echo("  python -m prestashop_mcp.cli doctor")
+    click.echo("  python -m prestashop_mcp.cli install-codex")
 
 
 @main.command()

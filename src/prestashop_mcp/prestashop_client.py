@@ -1,4 +1,4 @@
-"""PrestaShop API Client with CORRECT XML Structure per Official Documentation."""
+"""Async PrestaShop Webservice client used by the MCP server."""
 
 import asyncio
 import json
@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
 import aiohttp
-from aiohttp import BasicAuth
 
 from .config import Config
 
@@ -21,29 +20,27 @@ class PrestaShopAPIError(Exception):
 
 
 class PrestaShopClient:
-    """PrestaShop API Client with CORRECT XML structure per official documentation."""
+    """PrestaShop API client using ws_key authentication."""
     
     def __init__(self, config: Config):
         self.config = config
         self.base_url = config.shop_url.rstrip('/') + '/api/'
-        self.auth = BasicAuth(config.api_key, '')
         self.session: Optional[aiohttp.ClientSession] = None
         self.available_languages = [
             {"id": 1, "name": "Default"},
             {"id": 2, "name": "Secondary"}
-        ]  # Default language setup - can be enhanced with dynamic detection
+        ]  # Default language setup; can be replaced by dynamic detection later.
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
-                auth=self.auth,
                 timeout=aiohttp.ClientTimeout(total=30)
             )
         return self.session
     
     def _dict_to_xml(self, data: Dict[str, Any], root_name: str = "prestashop") -> str:
-        """Convert dictionary to XML format with CORRECT PrestaShop multilingual structure."""
+        """Convert a dictionary to PrestaShop XML, including multilingual fields."""
         def build_element(parent: ET.Element, key: str, value: Any):
             if isinstance(value, list) and value and isinstance(value[0], dict) and "id" in value[0] and "value" in value[0]:
                 # This is a multilingual field - create nested structure
@@ -655,7 +652,7 @@ class PrestaShopClient:
         product_id: str, 
         quantity: int
     ) -> Dict[str, Any]:
-        """Update product stock quantity with CORRECT XML structure."""
+        """Update product stock quantity."""
         # Get stock availables for this product
         stock_params = {'filter[id_product]': product_id}
         stock_response = await self._make_request('GET', 'stock_availables', params=stock_params)
@@ -664,7 +661,6 @@ class PrestaShopClient:
             stock_entry = stock_response['stock_availables'][0]
             stock_id = stock_entry['id']
             
-            # CRITICAL FIX: Proper XML structure for stock_available
             stock_data = {
                 "stock_available": {
                     "id": str(stock_id),
@@ -724,7 +720,6 @@ class PrestaShopClient:
         if not link_rewrite:
             link_rewrite = self._generate_link_rewrite(name)
         
-        # ENHANCED: Complete multilingual field initialization
         category_data = {
             "category": {
                 "name": self._init_multilingual_field(name),
@@ -1004,7 +999,6 @@ class PrestaShopClient:
     async def get_main_menu_links(self) -> Dict[str, Any]:
         """Get ps_mainmenu links from configurations."""
         try:
-            # FIXED: Correct filter pattern for PS_MAINMENU_CONTENT_ configurations
             params = {'filter[name]': '[PS_MAINMENU_CONTENT_]%'}
             configs = await self._make_request('GET', 'configurations', params=params)
             
@@ -1012,7 +1006,6 @@ class PrestaShopClient:
             if 'configurations' in configs:
                 for config in configs['configurations']:
                     config_name = config.get('name', '')
-                    # Enhanced filtering with regex pattern matching
                     if config_name.startswith('PS_MAINMENU_CONTENT_'):
                         try:
                             # Parse JSON value to make it more readable

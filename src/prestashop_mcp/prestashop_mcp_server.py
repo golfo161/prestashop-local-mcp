@@ -1,23 +1,19 @@
-"""Professional PrestaShop MCP Server with comprehensive CRUD operations and extended functionality."""
+﻿"""PrestaShop Local MCP server."""
 
 import asyncio
 import json
 import sys
-import os
 
-# Import MCP components
 from mcp.server.models import InitializationOptions
 from mcp.server import NotificationOptions, Server
 from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
-# Import our PrestaShop components
 from .config import Config
 from .prestashop_client import PrestaShopClient, PrestaShopAPIError
 
 
-# Create server instance
-server = Server("prestashop-mcp")
+server = Server("prestashop-local-mcp")
 
 
 @server.list_tools()
@@ -721,33 +717,31 @@ async def handle_call_tool(name: str, arguments: dict):
 
 async def main():
     """Run the PrestaShop MCP server."""
-    # Quick API test using the proper client
     try:
         config = Config()
         async with PrestaShopClient(config) as client:
-            print("🧪 Testing API connection with extended functionality...", file=sys.stderr)
+            print("Testing PrestaShop API connection...", file=sys.stderr)
             result = await client.get_configurations()
-            if 'error' not in result:
-                print("✅ API connection successful with extended functionality", file=sys.stderr)
-                print("🆕 New features: Module, Cache, Theme & Navigation Tree management", file=sys.stderr)
+            if "error" not in result:
+                print("API connection successful", file=sys.stderr)
+                print("Tools loaded: products, categories, orders, modules, cache, themes and menu", file=sys.stderr)
             else:
-                print(f"❌ API test failed: {result.get('error')}", file=sys.stderr)
+                print(f"API test failed: {result.get('error')}", file=sys.stderr)
                 return
     except Exception as e:
-        print(f"❌ API test error: {e}", file=sys.stderr)
+        print(f"API test error: {e}", file=sys.stderr)
         return
-    
-    # Run server
-    print("🚀 Starting Enhanced PrestaShop MCP server...", file=sys.stderr)
-    print("✅ Server ready with full CRUD operations + Navigation Tree management", file=sys.stderr)
-    
+
+    print("Starting PrestaShop Local MCP server...", file=sys.stderr)
+    print("Server ready", file=sys.stderr)
+
     async with stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
             write_stream,
             InitializationOptions(
-                server_name="prestashop-mcp",
-                server_version="4.0.0",
+                server_name="prestashop-local-mcp",
+                server_version="3.1.0",
                 capabilities=server.get_capabilities(
                     notification_options=NotificationOptions(),
                     experimental_capabilities={},
