@@ -106,13 +106,13 @@ python -c "import prestashop_mcp; print('Installation successful')"
 
 ## 5. Crear el fichero de configuracion `.env`
 
-La forma recomendada es usar el asistente interactivo. Pregunta la URL de la tienda, la clave del Webservice y crea el fichero local de configuracion.
+La forma recomendada es usar el asistente completo. Pregunta la URL de la tienda, la clave del Webservice, crea el fichero local de configuracion y puede conectar el MCP con Codex o Claude Desktop sin copiar rutas manualmente.
 
 ```powershell
-prestashop-local-mcp init
+prestashop-local-mcp setup
 ```
 
-La clave se pide con entrada oculta y no se imprime completa por pantalla.
+La clave se pide con entrada oculta y no se imprime completa por pantalla. El asistente guarda las credenciales solo en el equipo del usuario.
 
 Por defecto, en Windows el asistente guarda la configuracion aqui:
 
@@ -121,6 +121,12 @@ C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
 ```
 
 Ese fichero queda fuera del repositorio y es la opcion mas segura para distribuir la aplicacion.
+
+Si solo quieres crear el `.env` y no conectar ningun cliente todavia:
+
+```powershell
+prestashop-local-mcp init
+```
 
 ### Configuracion manual
 
@@ -216,6 +222,12 @@ Genera el bloque automaticamente:
 prestashop-local-mcp print-codex-config
 ```
 
+O instala la configuracion automaticamente:
+
+```powershell
+prestashop-local-mcp install-codex
+```
+
 Edita o crea este fichero:
 
 ```text
@@ -270,6 +282,12 @@ Genera el bloque automaticamente:
 
 ```powershell
 prestashop-local-mcp print-claude-config
+```
+
+O instala la configuracion automaticamente:
+
+```powershell
+prestashop-local-mcp install-claude
 ```
 
 Edita o crea este fichero:
@@ -400,6 +418,12 @@ prestashop-local-mcp --log-level DEBUG
 Asistente de configuracion:
 
 ```powershell
+prestashop-local-mcp setup
+```
+
+Crear solo el fichero de credenciales:
+
+```powershell
 prestashop-local-mcp init
 ```
 
@@ -421,10 +445,22 @@ Generar configuracion para Codex:
 prestashop-local-mcp print-codex-config
 ```
 
+Instalar configuracion para Codex:
+
+```powershell
+prestashop-local-mcp install-codex
+```
+
 Generar configuracion para Claude Desktop:
 
 ```powershell
 prestashop-local-mcp print-claude-config
+```
+
+Instalar configuracion para Claude Desktop:
+
+```powershell
+prestashop-local-mcp install-claude
 ```
 
 Arrancar manualmente desde un clon de desarrollo:

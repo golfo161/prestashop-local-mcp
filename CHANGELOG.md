@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Interactive setup wizard via `prestashop-local-mcp init`.
+- Full assisted setup via `prestashop-local-mcp setup`.
+- Automatic Codex configuration installer via `prestashop-local-mcp install-codex`.
+- Automatic Claude Desktop configuration installer via `prestashop-local-mcp install-claude`.
 - Secure per-user configuration file under the OS user config directory.
 - Diagnostic command via `prestashop-local-mcp doctor`.
 - Config generators for Codex and Claude Desktop.
