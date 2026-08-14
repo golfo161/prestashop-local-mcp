@@ -61,7 +61,28 @@ Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DEL
 
 ## 4. Instalar el MCP local
 
-Estos pasos descargan el repositorio, crean un entorno virtual aislado e instalan las dependencias.
+La forma recomendada para usuarios finales es instalar el paquete directamente desde GitHub. `pip` instala tambien las dependencias necesarias.
+
+```powershell
+py -m pip install --upgrade pip
+py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
+```
+
+Comprueba que el comando existe:
+
+```powershell
+prestashop-local-mcp --help
+```
+
+El comando antiguo tambien se mantiene por compatibilidad:
+
+```powershell
+prestashop-mcp --help
+```
+
+### Instalacion para desarrollo
+
+Usa estos pasos si quieres modificar el codigo fuente.
 
 ```powershell
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
@@ -85,12 +106,30 @@ python -c "import prestashop_mcp; print('Installation successful')"
 
 ## 5. Crear el fichero de configuracion `.env`
 
-El fichero `.env` guarda la URL de la tienda y la clave del Webservice. No se debe subir a Git.
+La forma recomendada es usar el asistente interactivo. Pregunta la URL de la tienda, la clave del Webservice y crea el fichero local de configuracion.
+
+```powershell
+prestashop-local-mcp init
+```
+
+La clave se pide con entrada oculta y no se imprime completa por pantalla.
+
+Por defecto, en Windows el asistente guarda la configuracion aqui:
+
+```text
+C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
+```
+
+Ese fichero queda fuera del repositorio y es la opcion mas segura para distribuir la aplicacion.
+
+### Configuracion manual
+
+Tambien puedes crear el fichero manualmente. El fichero `.env` guarda la URL de la tienda y la clave del Webservice. No se debe subir a Git.
 
 Crea este archivo:
 
 ```text
-C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP\.env
+C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
 ```
 
 Contenido:
@@ -113,9 +152,17 @@ LOG_LEVEL=INFO
 
 Esta prueba confirma que PrestaShop acepta la clave antes de arrancar el MCP.
 
+Con el comando asistido:
+
 ```powershell
-cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
-$key = (Get-Content .env | Where-Object { $_ -like "PRESTASHOP_API_KEY=*" }).Split("=",2)[1]
+prestashop-local-mcp doctor
+```
+
+O con una llamada directa:
+
+```powershell
+$envFile = "$env:APPDATA\prestashop-local-mcp\.env"
+$key = (Get-Content $envFile | Where-Object { $_ -like "PRESTASHOP_API_KEY=*" }).Split("=",2)[1]
 Invoke-WebRequest -Uri "https://tu-tienda.com/api/configurations?output_format=JSON&ws_key=$key" -UseBasicParsing
 ```
 
@@ -130,6 +177,14 @@ Si recibes `401 Unauthorized`, revisa que el Webservice este activo, que la clav
 ## 7. Ejecutar el MCP local por primera vez
 
 Esta prueba arranca el servidor MCP manualmente. Sirve para comprobar que el modulo funciona antes de conectarlo a un cliente.
+
+Si instalaste desde GitHub:
+
+```powershell
+prestashop-local-mcp --log-level DEBUG
+```
+
+Si estas trabajando desde el repositorio:
 
 ```powershell
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
@@ -154,6 +209,12 @@ Nota: si usas Codex o Claude Desktop, normalmente no tienes que dejar este coman
 ## 8. Configurar ChatGPT Desktop con Codex
 
 Esta opcion es para usar el MCP desde Codex en ChatGPT Desktop. Codex lee sus servidores MCP desde `config.toml`.
+
+Genera el bloque automaticamente:
+
+```powershell
+prestashop-local-mcp print-codex-config
+```
 
 Edita o crea este fichero:
 
@@ -204,6 +265,12 @@ Lista los 10 primeros productos de la categoria AGOTADOS usando get_products_by_
 ## 9. Configurar Claude Desktop
 
 Esta opcion es para usar el MCP desde Claude Desktop. Claude lee sus servidores MCP desde `claude_desktop_config.json`.
+
+Genera el bloque automaticamente:
+
+```powershell
+prestashop-local-mcp print-claude-config
+```
 
 Edita o crea este fichero:
 
@@ -325,6 +392,42 @@ En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automatica
 ## 13. Comandos utiles
 
 Arrancar manualmente el MCP:
+
+```powershell
+prestashop-local-mcp --log-level DEBUG
+```
+
+Asistente de configuracion:
+
+```powershell
+prestashop-local-mcp init
+```
+
+Diagnostico:
+
+```powershell
+prestashop-local-mcp doctor
+```
+
+Mostrar ruta del fichero seguro de configuracion:
+
+```powershell
+prestashop-local-mcp show-config-path
+```
+
+Generar configuracion para Codex:
+
+```powershell
+prestashop-local-mcp print-codex-config
+```
+
+Generar configuracion para Claude Desktop:
+
+```powershell
+prestashop-local-mcp print-claude-config
+```
+
+Arrancar manualmente desde un clon de desarrollo:
 
 ```powershell
 cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"

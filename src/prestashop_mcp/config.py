@@ -1,13 +1,31 @@
 """Configuration management for PrestaShop MCP Server."""
 
 import os
-from typing import Optional
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+
+def get_user_config_dir() -> Path:
+    """Return the per-user config directory for this MCP."""
+    if os.name == "nt" and os.getenv("APPDATA"):
+        return Path(os.environ["APPDATA"]) / "prestashop-local-mcp"
+    return Path.home() / ".config" / "prestashop-local-mcp"
+
+
+def get_user_env_path() -> Path:
+    """Return the per-user .env path used by installed distributions."""
+    return get_user_config_dir() / ".env"
+
+
+def load_config_files() -> None:
+    """Load project and user configuration without overriding real env vars."""
+    load_dotenv()
+    load_dotenv(get_user_env_path(), override=False)
+
+
+load_config_files()
 
 
 class Config(BaseModel):
@@ -42,6 +60,7 @@ class Config(BaseModel):
     @classmethod
     def from_env(cls) -> "Config":
         """Create configuration from environment variables."""
+        load_config_files()
         config = cls()
         config.validate_config()
         return config

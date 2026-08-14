@@ -3,13 +3,14 @@ requires = ["setuptools>=45", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "prestashop-mcp"
-version = "3.0.0"
-description = "Professional Model Context Protocol server for complete PrestaShop e-commerce management with extended functionality: modules, cache, themes, and navigation"
+name = "prestashop-local-mcp"
+version = "3.1.0"
+description = "Local Model Context Protocol server for PrestaShop management with assisted setup for Codex and Claude Desktop"
 readme = "README.md"
+license = "MIT"
 requires-python = ">=3.8"
 authors = [
-    {name = "PrestaShop MCP Team"}
+    {name = "golfo161"}
 ]
 keywords = [
     "prestashop", "mcp", "model-context-protocol", "ecommerce", "api", 
@@ -20,7 +21,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: System Administrators",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
@@ -33,7 +33,7 @@ classifiers = [
     "Topic :: System :: Systems Administration",
 ]
 dependencies = [
-    "mcp>=1.0.0",
+    "mcp>=1.0.0,<2.0.0",
     "requests>=2.31.0",
     "aiohttp>=3.9.0",
     "pydantic>=2.5.0",
@@ -43,13 +43,14 @@ dependencies = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/latinogino/prestashop-mcp"
-"Bug Reports" = "https://github.com/latinogino/prestashop-mcp/issues"
-"Source" = "https://github.com/latinogino/prestashop-mcp"
-"Documentation" = "https://github.com/latinogino/prestashop-mcp#readme"
+"Homepage" = "https://github.com/golfo161/prestashop-local-mcp"
+"Bug Reports" = "https://github.com/golfo161/prestashop-local-mcp/issues"
+"Source" = "https://github.com/golfo161/prestashop-local-mcp"
+"Documentation" = "https://github.com/golfo161/prestashop-local-mcp#readme"
 
 [project.scripts]
 prestashop-mcp = "prestashop_mcp.cli:main"
+prestashop-local-mcp = "prestashop_mcp.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

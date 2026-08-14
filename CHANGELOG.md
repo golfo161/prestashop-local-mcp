@@ -8,9 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- Package metadata now targets the `golfo161/prestashop-local-mcp` fork.
+- Added `prestashop-local-mcp` command alias while keeping `prestashop-mcp` for compatibility.
 - Optimized `get_products_by_category` to avoid scanning the full product catalog.
 - `get_products_by_category` now combines default-category matches with category association data from `categories/{id}`.
 - Category name resolution is now accent-insensitive and case-insensitive as a fallback.
+
+### Added
+- Interactive setup wizard via `prestashop-local-mcp init`.
+- Secure per-user configuration file under the OS user config directory.
+- Diagnostic command via `prestashop-local-mcp doctor`.
+- Config generators for Codex and Claude Desktop.
 
 ### Fixed
 - Normalized PrestaShop list responses returned as direct arrays.
