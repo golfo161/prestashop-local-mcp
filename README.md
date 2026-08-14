@@ -62,7 +62,30 @@ Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DEL
 
 ## 4. Instalar el MCP local
 
-La forma recomendada para usuarios finales es instalar el paquete desde el ZIP de GitHub. No requiere Git y `pip` instala tambien las dependencias necesarias.
+La forma recomendada para usuarios finales es usar el instalador asistido de Windows. No requiere Git, permite elegir la carpeta donde se instalara el MCP y crea un entorno virtual aislado con todas las dependencias.
+
+Descarga y ejecuta el instalador:
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/golfo161/prestashop-local-mcp/main/scripts/install_windows.py" -OutFile "$env:TEMP\prestashop-local-mcp-install.py"
+py "$env:TEMP\prestashop-local-mcp-install.py"
+```
+
+El instalador preguntara:
+
+1. La carpeta donde quieres instalar el MCP.
+2. La URL de la tienda PrestaShop.
+3. La API key del Webservice con entrada oculta.
+4. Si quieres conectar Codex en ChatGPT Desktop.
+5. Si quieres conectar Claude Desktop.
+
+El codigo y el entorno virtual quedan en la carpeta elegida. Las credenciales se guardan fuera de esa carpeta, en el perfil seguro del usuario:
+
+```text
+C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
+```
+
+Si prefieres instalar manualmente el paquete desde el ZIP de GitHub, puedes hacerlo asi. Esta opcion tampoco requiere Git y `pip` instala tambien las dependencias necesarias.
 
 ```powershell
 py -m pip install --upgrade pip
@@ -456,6 +479,13 @@ En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automatica
 ## 13. Comandos utiles
 
 En Windows usa preferentemente `py -m prestashop_mcp.cli ...`. Los ejemplos con `prestashop-local-mcp ...` solo funcionan si la carpeta `Scripts` de Python esta en el `PATH`.
+
+Instalacion asistida con carpeta elegida por el usuario:
+
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/golfo161/prestashop-local-mcp/main/scripts/install_windows.py" -OutFile "$env:TEMP\prestashop-local-mcp-install.py"
+py "$env:TEMP\prestashop-local-mcp-install.py"
+```
 
 Arrancar manualmente el MCP:
 
