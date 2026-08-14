@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- README now documents Windows-safe execution via `py -m prestashop_mcp.cli` for systems where console scripts are not on `PATH`.
 - README now recommends Git-free installation from the GitHub ZIP archive for non-technical users.
 - Package metadata now targets the `golfo161/prestashop-local-mcp` fork.
 - Added `prestashop-local-mcp` command alias while keeping `prestashop-mcp` for compatibility.
