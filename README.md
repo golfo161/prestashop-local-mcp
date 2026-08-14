@@ -32,9 +32,10 @@ Estos programas deben existir en el ordenador donde ejecutes el MCP.
 
 - Windows 10/11.
 - Python 3.10 o superior.
-- Git, o descarga manual del ZIP desde GitHub.
 - Acceso al back office de PrestaShop para crear una clave de Webservice.
 - ChatGPT Desktop con Codex, Claude Desktop, o ambos.
+
+No hace falta tener Git instalado para la instalacion recomendada.
 
 ## 3. Preparar PrestaShop
 
@@ -61,11 +62,11 @@ Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DEL
 
 ## 4. Instalar el MCP local
 
-La forma recomendada para usuarios finales es instalar el paquete directamente desde GitHub. `pip` instala tambien las dependencias necesarias.
+La forma recomendada para usuarios finales es instalar el paquete desde el ZIP de GitHub. No requiere Git y `pip` instala tambien las dependencias necesarias.
 
 ```powershell
 py -m pip install --upgrade pip
-py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
+py -m pip install "https://github.com/golfo161/prestashop-local-mcp/archive/refs/heads/main.zip"
 ```
 
 Comprueba que el comando existe:
@@ -78,6 +79,43 @@ El comando antiguo tambien se mantiene por compatibilidad:
 
 ```powershell
 prestashop-mcp --help
+```
+
+### Auto-deploy asistido
+
+Despues de instalar, ejecuta:
+
+```powershell
+prestashop-local-mcp setup
+```
+
+El asistente hace todo el despliegue local:
+
+1. Solicita la URL de la tienda PrestaShop.
+2. Solicita la API key con entrada oculta.
+3. Guarda las credenciales en `%APPDATA%\prestashop-local-mcp\.env`.
+4. Prueba la conexion con la API.
+5. Pregunta si quieres conectar Codex en ChatGPT Desktop.
+6. Si respondes que si, actualiza automaticamente `%USERPROFILE%\.codex\config.toml`.
+7. Pregunta si quieres conectar Claude Desktop.
+8. Si respondes que si, actualiza automaticamente `%APPDATA%\Claude\claude_desktop_config.json`.
+9. Crea copias de seguridad de los ficheros de cliente si ya existian.
+
+El asistente no copia la API key en Codex ni Claude Desktop. La clave solo queda en el fichero local `.env` del usuario.
+
+Si ya has ejecutado `setup` y solo quieres reinstalar la conexion con un cliente:
+
+```powershell
+prestashop-local-mcp install-codex
+prestashop-local-mcp install-claude
+```
+
+### Instalacion alternativa con Git
+
+Usa esta opcion solo si tienes Git instalado y disponible en el PATH.
+
+```powershell
+py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
 ```
 
 ### Instalacion para desarrollo

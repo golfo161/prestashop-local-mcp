@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Changed
+- README now recommends Git-free installation from the GitHub ZIP archive for non-technical users.
 - Package metadata now targets the `golfo161/prestashop-local-mcp` fork.
 - Added `prestashop-local-mcp` command alias while keeping `prestashop-mcp` for compatibility.
 - Optimized `get_products_by_category` to avoid scanning the full product catalog.
