@@ -39,3 +39,5 @@ def test_write_helper_files_creates_user_facing_launchers(tmp_path, monkeypatch)
 
     update_bat = (install_dir / "update-mcp.bat").read_text(encoding="utf-8")
     assert "https://example.com/package.zip" in update_bat
+    assert "--force-reinstall" in update_bat
+    assert "--no-cache-dir" in update_bat

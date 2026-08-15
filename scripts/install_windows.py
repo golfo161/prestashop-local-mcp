@@ -134,7 +134,7 @@ if not exist "%PYTHON%" (
   exit /b 1
 )
 "%PYTHON%" -m pip install --upgrade pip
-"%PYTHON%" -m pip install --upgrade "{package_url}"
+"%PYTHON%" -m pip install --upgrade --force-reinstall --no-cache-dir "{package_url}"
 "%PYTHON%" -m prestashop_mcp.cli setup
 pause
 """
@@ -184,7 +184,16 @@ def main() -> int:
         print(f"Entorno virtual existente: {python_exe}")
 
     _run([str(python_exe), "-m", "pip", "install", "--upgrade", "pip"])
-    _run([str(python_exe), "-m", "pip", "install", "--upgrade", args.package_url])
+    _run([
+        str(python_exe),
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "--force-reinstall",
+        "--no-cache-dir",
+        args.package_url,
+    ])
     _write_helper_files(install_dir, python_exe, args.package_url)
 
     print("")
