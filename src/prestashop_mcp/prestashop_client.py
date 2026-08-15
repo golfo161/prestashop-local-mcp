@@ -201,13 +201,6 @@ class PrestaShopClient:
                 break
         return ", ".join(keywords)
 
-    def _generate_long_description(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
-        """Generate a useful long description when only a summary is provided."""
-        summary_text = self._get_translation(summary, language)
-        if summary_text:
-            return summary_text
-        return self._get_translation(name, language)
-    
     async def _make_request(
         self, 
         method: str, 
@@ -642,8 +635,7 @@ class PrestaShopClient:
     ) -> Dict[str, Any]:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
         summary_value = summary if summary is not None else (description if description is not None else "")
-        description_value = description if description is not None and summary is not None else None
-        
+
         default_category_id = str(category_id) if category_id else "2"
 
         # CRITICAL FIX: Complete product initialization with all required fields
@@ -655,12 +647,8 @@ class PrestaShopClient:
                     link_rewrite if link_rewrite is not None else name,
                     transform=self._generate_link_rewrite
                 ),
-                "description": self._build_multilingual_from_languages(
-                    lambda language: self._get_translation(description_value, language)
-                    if description_value is not None
-                    else self._generate_long_description(name, summary_value, language)
-                ),
-                "description_short": self._build_multilingual_field(summary_value, max_length=800),
+                "description": self._init_multilingual_field(""),
+                "description_short": self._build_multilingual_field(summary_value, max_length=1500),
                 "meta_title": self._build_multilingual_from_languages(
                     lambda language: self._get_translation(meta_title, language)
                     if meta_title is not None

@@ -253,6 +253,11 @@ async def test_create_product_writes_configured_language_fields():
         {"id": 6, "value": "Produit test"},
     ]
     assert product["description"] == [
+        {"id": 1, "value": ""},
+        {"id": 5, "value": ""},
+        {"id": 6, "value": ""},
+    ]
+    assert product["description_short"] == [
         {"id": 1, "value": "Descripcion en espanol"},
         {"id": 5, "value": "English description"},
         {"id": 6, "value": "Description francaise"},
@@ -279,11 +284,6 @@ async def test_create_product_writes_summary_to_short_description_and_seo_fields
             "es": "Lana suave para tejer prendas de invierno.",
             "en": "Soft yarn for knitting winter garments.",
             "fr": "Laine douce pour tricoter des vetements d'hiver.",
-        },
-        description={
-            "es": "Lana merino suave, calida y facil de trabajar para proyectos de punto y crochet.",
-            "en": "Soft, warm merino yarn that is easy to work with for knitting and crochet projects.",
-            "fr": "Laine merinos douce, chaude et facile a travailler pour les projets de tricot et crochet.",
         },
         meta_title={
             "es": "Lana Merino Azul",
@@ -314,7 +314,11 @@ async def test_create_product_writes_summary_to_short_description_and_seo_fields
         {"id": 5, "value": "Soft yarn for knitting winter garments."},
         {"id": 6, "value": "Laine douce pour tricoter des vetements d'hiver."},
     ]
-    assert product["description"][0]["value"].startswith("Lana merino suave")
+    assert product["description"] == [
+        {"id": 1, "value": ""},
+        {"id": 5, "value": ""},
+        {"id": 6, "value": ""},
+    ]
     assert product["meta_title"][1]["value"] == "Blue Merino Wool"
     assert product["meta_description"][2]["value"].startswith("Achetez une laine")
     assert product["meta_keywords"][0]["value"] == "lana merino, lana azul, punto, crochet"
@@ -337,7 +341,7 @@ async def test_create_product_generates_basic_seo_when_only_summary_is_provided(
     )
 
     product = client.requests[0]["data"]["product"]
-    assert product["description"][0]["value"] == "Hilo natural suave para labores de verano."
+    assert product["description"][0]["value"] == ""
     assert product["description_short"][0]["value"] == "Hilo natural suave para labores de verano."
     assert product["meta_title"][0]["value"] == "Lana Algodon Natural"
     assert product["meta_description"][0]["value"] == "Hilo natural suave para labores de verano."
@@ -366,6 +370,27 @@ async def test_create_product_fills_missing_translations_from_spanish():
         {"id": 5, "value": "Descripcion base"},
         {"id": 6, "value": "Descripcion base"},
     ]
+    assert product["description"] == [
+        {"id": 1, "value": ""},
+        {"id": 5, "value": ""},
+        {"id": 6, "value": ""},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_create_product_limits_summary_to_1500_characters():
+    client = SequenceClient([{"product": {"id": "10"}}])
+    long_summary = "a" * 1600
+
+    await client.create_product(
+        name="Long summary product",
+        price=12.5,
+        summary=long_summary,
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert len(product["description_short"][0]["value"]) == 1500
 
 
 @pytest.mark.asyncio

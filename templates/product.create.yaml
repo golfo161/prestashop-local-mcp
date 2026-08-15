@@ -10,10 +10,6 @@ producto:
     es: "Resumen breve del producto."
     en: "Short product summary."
     fr: "Resume bref du produit."
-  descripcion_larga:
-    es: "Descripcion completa del producto, con detalles utiles para la ficha."
-    en: "Complete product description with useful details for the product page."
-    fr: "Description complete du produit avec des details utiles pour la fiche."
   seo:
     meta_title:
       es: "Titulo SEO del producto"

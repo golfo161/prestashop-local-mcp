@@ -143,21 +143,6 @@ async def handle_list_tools():
                         "description": "Product name. Prefer {es,en,fr}; if the user gives one language, translate it before calling this tool."
                     },
                     "price": {"type": "number", "description": "Product price"},
-                    "description": {
-                        "oneOf": [
-                            {"type": "string"},
-                            {
-                                "type": "object",
-                                "properties": {
-                                    "es": {"type": "string"},
-                                    "en": {"type": "string"},
-                                    "fr": {"type": "string"}
-                                },
-                                "additionalProperties": False
-                            }
-                        ],
-                        "description": "Long product description. Prefer {es,en,fr}. If omitted, the MCP derives it from summary."
-                    },
                     "summary": {
                         "oneOf": [
                             {"type": "string"},
@@ -171,7 +156,7 @@ async def handle_list_tools():
                                 "additionalProperties": False
                             }
                         ],
-                        "description": "Product summary/short description. Use the user's description here when they provide a product text."
+                        "description": "Product summary/short description. Use the user's product text here. The MCP stores it in PrestaShop summary and limits it to 1500 characters."
                     },
                     "meta_title": {
                         "oneOf": [
@@ -640,7 +625,6 @@ async def handle_call_tool(name: str, arguments: dict):
                 result = await client.create_product(
                     name=arguments['name'],
                     price=arguments['price'],
-                    description=arguments.get('description'),
                     summary=arguments.get('summary'),
                     meta_title=arguments.get('meta_title'),
                     meta_description=arguments.get('meta_description'),
