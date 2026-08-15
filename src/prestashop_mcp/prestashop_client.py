@@ -220,6 +220,18 @@ class PrestaShopClient:
         link_rewrite = re.sub(r'\s+', '-', link_rewrite.strip())
         return link_rewrite
 
+    def _build_product_category_associations(self, category_id: str) -> Dict[str, Any]:
+        """Build product category associations required for catalog visibility."""
+        return {
+            "categories": [
+                {
+                    "category": {
+                        "id": str(category_id)
+                    }
+                }
+            ]
+        }
+
     def _get_response_items(self, response: Dict[str, Any], singular: str, plural: str) -> List[Dict[str, Any]]:
         """Normalize PrestaShop JSON responses that may use singular or plural roots."""
         if isinstance(response, list):
@@ -565,6 +577,8 @@ class PrestaShopClient:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
         description_value = description if description is not None else ""
         
+        default_category_id = str(category_id) if category_id else "2"
+
         # CRITICAL FIX: Complete product initialization with all required fields
         product_data = {
             "product": {
@@ -593,7 +607,7 @@ class PrestaShopClient:
                 "show_price": "1",  # Price is visible
                 "indexed": "1",  # Include in search index
                 "visibility": "both",  # Visible in catalog and search
-                "id_category_default": category_id if category_id else "2",
+                "id_category_default": default_category_id,
                 
                 # Stock and ordering
                 "minimal_quantity": "1",
@@ -629,7 +643,8 @@ class PrestaShopClient:
                 "cache_has_attachments": "0",
                 "is_customizable": "0",
                 "uploadable_files": "0",
-                "text_fields": "0"
+                "text_fields": "0",
+                "associations": self._build_product_category_associations(default_category_id)
             }
         }
         
@@ -671,7 +686,7 @@ class PrestaShopClient:
         
         product_data = existing['product']
         product_data.pop('manufacturer_name', None)
-        product_data.pop('associations', None)
+        associations = product_data.pop('associations', None)
         
         # Update fields with correct multilingual structure
         if 'name' in kwargs:
@@ -695,6 +710,21 @@ class PrestaShopClient:
             product_data['id_category_default'] = kwargs['category_id']
         if 'active' in kwargs:
             product_data['active'] = "1" if kwargs['active'] else "0"
+            if kwargs['active']:
+                product_data['state'] = "1"
+                product_data['available_for_order'] = "1"
+                product_data['show_price'] = "1"
+                product_data['indexed'] = "1"
+                product_data['visibility'] = "both"
+
+        if 'category_id' in kwargs:
+            product_data['associations'] = self._build_product_category_associations(kwargs['category_id'])
+        elif kwargs.get('active') and product_data.get('id_category_default'):
+            product_data['associations'] = self._build_product_category_associations(
+                product_data['id_category_default']
+            )
+        elif associations:
+            product_data['associations'] = associations
         
         return await self._make_request(
             'PUT', 

@@ -160,6 +160,29 @@ async def test_create_product_starts_disabled():
 
 
 @pytest.mark.asyncio
+async def test_create_product_associates_default_category_for_catalog_visibility():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name="Categorized product",
+        price=12.5,
+        category_id="210",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["id_category_default"] == "210"
+    assert product["associations"] == {
+        "categories": [
+            {
+                "category": {
+                    "id": "210"
+                }
+            }
+        ]
+    }
+
+
+@pytest.mark.asyncio
 async def test_create_product_uses_configured_tax_rules_group():
     client = SequenceClient([{"product": {"id": "10"}}])
     client.config.tax_rules_group_id = "7"
@@ -291,3 +314,42 @@ async def test_update_product_stock_updates_existing_stock_record():
     assert client.requests[2]["method"] == "PUT"
     assert client.requests[2]["data"]["stock_available"]["quantity"] == "10"
     assert result["stock_available"]["quantity"] == "10"
+
+
+@pytest.mark.asyncio
+async def test_update_product_active_true_refreshes_catalog_visibility_fields():
+    client = SequenceClient([
+        {
+            "product": {
+                "id": "10",
+                "id_category_default": "210",
+                "active": "0",
+                "state": "1",
+                "available_for_order": "1",
+                "show_price": "1",
+                "indexed": "0",
+                "visibility": "none",
+                "associations": {"images": [{"id": "5"}]},
+            }
+        },
+        {"product": {"id": "10", "active": "1"}},
+    ])
+
+    await client.update_product("10", active=True)
+
+    product = client.requests[1]["data"]["product"]
+    assert product["active"] == "1"
+    assert product["state"] == "1"
+    assert product["available_for_order"] == "1"
+    assert product["show_price"] == "1"
+    assert product["indexed"] == "1"
+    assert product["visibility"] == "both"
+    assert product["associations"] == {
+        "categories": [
+            {
+                "category": {
+                    "id": "210"
+                }
+            }
+        ]
+    }
