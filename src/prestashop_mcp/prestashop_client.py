@@ -6,6 +6,7 @@ import logging
 import re
 import unicodedata
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 from urllib.parse import urljoin
 
@@ -512,7 +513,8 @@ class PrestaShopClient:
         category_id: Optional[str] = None,
         quantity: Optional[int] = None,
         reference: Optional[str] = None,
-        weight: Optional[float] = None
+        weight: Optional[float] = None,
+        image_path: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
         link_rewrite = self._generate_link_rewrite(name)
@@ -595,6 +597,14 @@ class PrestaShopClient:
                 await self.update_product_stock(product_id, quantity)
             except Exception as e:
                 logging.warning(f"Product created but stock update failed: {e}")
+
+        if image_path and 'product' in result and 'id' in result['product']:
+            product_id = result['product']['id']
+            try:
+                result['image_upload'] = await self.upload_product_image(product_id, image_path)
+            except Exception as e:
+                logging.warning(f"Product created but image upload failed: {e}")
+                result['image_upload'] = {"error": str(e)}
         
         return result
     
@@ -646,6 +656,38 @@ class PrestaShopClient:
     async def delete_product(self, product_id: str) -> Dict[str, Any]:
         """Delete a product from PrestaShop."""
         return await self._make_request('DELETE', f'products/{product_id}')
+
+    async def upload_product_image(self, product_id: str, image_path: str) -> Dict[str, Any]:
+        """Upload an image to a product using PrestaShop image webservice."""
+        path = Path(image_path).expanduser()
+        if not path.exists() or not path.is_file():
+            raise PrestaShopAPIError(f"Image file not found: {image_path}")
+
+        session = await self._get_session()
+        url = urljoin(self.base_url, f"images/products/{product_id}")
+        params = {"ws_key": self.config.api_key}
+
+        with path.open("rb") as image_file:
+            form = aiohttp.FormData()
+            form.add_field(
+                "image",
+                image_file,
+                filename=path.name,
+                content_type="application/octet-stream",
+            )
+            async with session.post(url, params=params, data=form) as response:
+                response_text = await response.text()
+                if response.status >= 400:
+                    raise PrestaShopAPIError(
+                        f"Image upload failed with status {response.status}: {response_text}"
+                    )
+
+        return {
+            "status": "success",
+            "product_id": str(product_id),
+            "image_path": str(path),
+            "response": response_text,
+        }
     
     async def update_product_stock(
         self, 

@@ -7,7 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Product creation can now upload an initial image when `image_path` is provided.
+- Product creation YAML template and README workflow for assistant-guided product creation.
+
 ### Changed
+- README now includes a complete grouped list of available PrestaShop MCP functionality.
+- Assisted setup now asks whether to overwrite, omit, or cancel when the per-user `.env` already exists.
+- Generated setup/update batch files now run the setup wizard without forcing credential overwrite.
+- Requirements file now pins `mcp` below 2.0 to match the supported server API.
 - Project documentation now presents `golfo161/prestashop-local-mcp` as the main distribution.
 - Removed the legacy `prestashop-mcp` console script alias from package metadata.
 - Runtime dependencies now exclude unused `requests`.

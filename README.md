@@ -26,7 +26,160 @@ Herramientas principales:
 
 Recomendacion: empieza siempre con herramientas de lectura antes de usar acciones que creen, modifiquen o borren datos.
 
-## 2. Requisitos
+## 2. Funcionalidades disponibles
+
+Estas son las operaciones que expone actualmente el MCP.
+
+### Conexion y estado de tienda
+
+- `test_connection`: prueba la conexion con la API de PrestaShop.
+- `get_shop_info`: muestra informacion general y estadisticas basicas de la tienda.
+
+### Productos
+
+- `get_products`: consulta productos por ID o lista productos con filtros.
+- `get_products_by_category`: lista productos asociados a una categoria por ID o nombre, incluyendo categorias secundarias.
+- `create_product`: crea un producto nuevo. Tambien puede subir una imagen si se informa `image_path`.
+- `update_product`: actualiza un producto existente.
+- `delete_product`: elimina un producto.
+- `update_product_stock`: cambia la cantidad de stock de un producto.
+- `update_product_price`: cambia precio y precio mayorista.
+
+Campos habituales que puedes consultar o modificar segun la herramienta:
+
+- nombre
+- precio
+- descripcion
+- categoria
+- referencia/SKU
+- peso
+- estado activo
+- stock
+- informacion de categorias asociadas
+- imagen inicial durante la creacion
+
+Para subir una imagen al crear un producto, usa `create_product` con una ruta local absoluta en `image_path`, por ejemplo `C:\Users\usuario\Pictures\producto.jpg`. El Webservice de PrestaShop debe tener permisos sobre el recurso de imagenes/productos.
+
+### Plantilla recomendada para crear productos
+
+La forma mas segura de crear productos desde el asistente es preparar una ficha de producto y pedirle que la revise antes de crear nada. El repositorio incluye una plantilla base en `templates/product.create.yaml`.
+
+Campos de la plantilla:
+
+- `nombre`: obligatorio. Nombre visible del producto.
+- `precio`: obligatorio. Precio de venta.
+- `descripcion`: opcional, pero recomendable para la ficha del producto.
+- `categoria_id`: opcional. Si no se indica, PrestaShop usara la categoria por defecto configurada por el MCP.
+- `cantidad`: opcional. Stock inicial.
+- `referencia`: opcional. Referencia interna o SKU.
+- `peso`: opcional. Peso del producto.
+- `imagen`: opcional. Ruta local absoluta de la imagen inicial.
+
+Ejemplo:
+
+```yaml
+producto:
+  nombre: "Lana Merino Azul 100g"
+  precio: 5.95
+  descripcion: "Ovillo de lana merino suave, ideal para prendas de invierno."
+  categoria_id: "12"
+  cantidad: 20
+  referencia: "MERINO-AZUL-100"
+  peso: 0.10
+  imagen: "C:\\Users\\usuario\\Pictures\\productos\\merino-azul.jpg"
+```
+
+Antes de crear el producto, pide al asistente:
+
+```text
+Revisa esta plantilla de producto. Si falta algun dato importante, preguntame antes de crearlo. Si esta correcta, crea el producto en PrestaShop usando create_product.
+```
+
+El asistente debe convertir la plantilla a los parametros de `create_product`:
+
+```json
+{
+  "name": "Lana Merino Azul 100g",
+  "price": 5.95,
+  "description": "Ovillo de lana merino suave, ideal para prendas de invierno.",
+  "category_id": "12",
+  "quantity": 20,
+  "reference": "MERINO-AZUL-100",
+  "weight": 0.10,
+  "image_path": "C:\\Users\\usuario\\Pictures\\productos\\merino-azul.jpg"
+}
+```
+
+Flujo recomendado:
+
+1. Copia la plantilla y rellena los datos del producto.
+2. Comprueba que la imagen existe en esa ruta local si vas a subir imagen.
+3. Pide al asistente que valide la ficha antes de crearla.
+4. El asistente llama a `create_product`.
+5. El MCP crea el producto y, si se indico `image_path`, sube la imagen al producto creado.
+6. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
+
+### Categorias
+
+- `get_categories`: lista categorias y permite filtrar por categoria padre.
+- `create_category`: crea una categoria.
+- `update_category`: actualiza nombre, descripcion o estado activo.
+- `delete_category`: elimina una categoria.
+
+### Clientes
+
+- `get_customers`: lista clientes y permite filtrar por email.
+- `create_customer`: crea un cliente.
+- `update_customer`: actualiza email, nombre, apellidos o estado activo.
+
+### Pedidos
+
+- `get_orders`: lista pedidos y permite filtrar por cliente o estado.
+- `get_order_states`: consulta los estados de pedido disponibles.
+- `update_order_status`: cambia el estado de un pedido.
+
+### Modulos
+
+- `get_modules`: lista modulos instalados.
+- `get_module_by_name`: consulta un modulo por nombre tecnico.
+- `install_module`: instala un modulo.
+- `update_module_status`: activa o desactiva un modulo.
+
+### Menu principal y navegacion
+
+- `get_main_menu_links`: consulta enlaces del menu principal.
+- `update_main_menu_link`: actualiza un enlace del menu principal.
+- `add_main_menu_link`: anade un enlace al menu principal.
+- `get_menu_tree`: consulta el arbol de categorias usado en la navegacion.
+- `add_category_to_menu`: anade una categoria al menu.
+- `remove_category_from_menu`: quita una categoria del menu.
+- `update_menu_tree`: actualiza el orden completo del arbol del menu.
+- `get_menu_tree_status`: muestra el estado combinado de enlaces y categorias del menu.
+
+### Cache
+
+- `get_cache_status`: consulta la configuracion actual de cache.
+- `clear_cache`: limpia la cache de PrestaShop.
+
+### Tema
+
+- `get_themes`: consulta temas disponibles y ajustes del tema actual.
+- `update_theme_setting`: actualiza una configuracion del tema.
+
+### Instalacion, configuracion y mantenimiento
+
+- Instalador asistido para Windows.
+- Eleccion de carpeta de instalacion.
+- Creacion automatica de entorno virtual.
+- Configuracion segura de credenciales en `%APPDATA%\prestashop-local-mcp\.env`.
+- Conexion automatica con Codex en ChatGPT Desktop.
+- Conexion automatica con Claude Desktop.
+- Generacion manual de configuracion para Codex o Claude.
+- Diagnostico de conexion.
+- Actualizacion con `update-mcp.bat`.
+- Desinstalacion local con `uninstall-mcp.bat`.
+
+## 3. Requisitos
 
 Estos programas deben existir en el ordenador donde ejecutes el MCP.
 
@@ -37,7 +190,7 @@ Estos programas deben existir en el ordenador donde ejecutes el MCP.
 
 No hace falta tener Git instalado para la instalacion recomendada.
 
-## 3. Preparar PrestaShop
+## 4. Preparar PrestaShop
 
 Antes de instalar el MCP, activa la API en tu tienda.
 
@@ -60,7 +213,7 @@ Para una primera prueba de lectura, concede al menos:
 
 Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DELETE` en los recursos correspondientes.
 
-## 4. Instalar el MCP local
+## 5. Instalar el MCP local
 
 La forma recomendada para usuarios finales es usar el instalador asistido de Windows. No requiere Git, permite elegir la carpeta donde se instalara el MCP y crea un entorno virtual aislado con todas las dependencias.
 
@@ -225,7 +378,7 @@ Comprueba que el paquete carga:
 py -c "import prestashop_mcp; print('Installation successful')"
 ```
 
-## 5. Crear el fichero de configuracion `.env`
+## 6. Crear el fichero de configuracion `.env`
 
 La forma recomendada es usar el asistente completo. Pregunta la URL de la tienda, la clave del Webservice, crea el fichero local de configuracion y puede conectar el MCP con Codex o Claude Desktop sin copiar rutas manualmente.
 
@@ -250,6 +403,12 @@ C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp\.env
 ```
 
 Ese fichero queda fuera del repositorio y es la opcion mas segura para distribuir la aplicacion.
+
+Si el fichero `.env` ya existe, el asistente pregunta que quieres hacer antes de pedir nuevas credenciales:
+
+- `overwrite`: sobrescribe el `.env` con una URL y API key nuevas.
+- `omit`: conserva el `.env` actual y continua con el resto del asistente.
+- `cancel`: cancela el asistente sin cambiar nada.
 
 Si solo quieres crear el `.env` y no conectar ningun cliente todavia:
 
@@ -293,7 +452,7 @@ PRESTASHOP_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 LOG_LEVEL=INFO
 ```
 
-## 6. Probar la API directamente
+## 7. Probar la API directamente
 
 Esta prueba confirma que PrestaShop acepta la clave antes de arrancar el MCP.
 
@@ -325,7 +484,7 @@ StatusCode : 200
 
 Si recibes `401 Unauthorized`, revisa que el Webservice este activo, que la clave sea correcta y que tenga permisos `GET` en `configurations`.
 
-## 7. Ejecutar el MCP local por primera vez
+## 8. Ejecutar el MCP local por primera vez
 
 Esta prueba arranca el servidor MCP manualmente. Sirve para comprobar que el modulo funciona antes de conectarlo a un cliente.
 
@@ -363,7 +522,7 @@ Para detenerlo, pulsa `Ctrl+C`.
 
 Nota: si usas Codex o Claude Desktop, normalmente no tienes que dejar este comando abierto. El cliente arrancara el MCP automaticamente cuando lea su fichero de configuracion.
 
-## 8. Configurar ChatGPT Desktop con Codex
+## 9. Configurar ChatGPT Desktop con Codex
 
 Esta opcion es para usar el MCP desde Codex en ChatGPT Desktop. Codex lee sus servidores MCP desde `config.toml`.
 
@@ -427,7 +586,7 @@ Dame informacion general de la tienda.
 Lista los 10 primeros productos de la categoria AGOTADOS usando get_products_by_category.
 ```
 
-## 9. Configurar Claude Desktop
+## 10. Configurar Claude Desktop
 
 Esta opcion es para usar el MCP desde Claude Desktop. Claude lee sus servidores MCP desde `claude_desktop_config.json`.
 
@@ -490,7 +649,7 @@ Get general shop information.
 Use prestashop:get_products_by_category for category AGOTADOS and return 10 products.
 ```
 
-## 10. Buscar productos por categoria real
+## 11. Buscar productos por categoria real
 
 PrestaShop permite que un producto este asociado a varias categorias. La herramienta `get_products` filtra por `id_category_default`, por lo que puede no encontrar productos que pertenecen a una categoria secundaria.
 
@@ -536,7 +695,7 @@ La respuesta incluye:
 
 Nota: esta herramienta es de solo lectura.
 
-## 11. ChatGPT Apps y MCP remoto
+## 12. ChatGPT Apps y MCP remoto
 
 ChatGPT Apps no se conecta directamente a servidores MCP locales `stdio`. Para usar este MCP como app de ChatGPT fuera de Codex, debes exponerlo como servidor MCP remoto o usar Secure MCP Tunnel.
 
@@ -546,7 +705,7 @@ Resumen:
 - Claude Desktop: usa `C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json`.
 - ChatGPT Apps: requiere MCP remoto o Secure MCP Tunnel.
 
-## 12. Actualizaciones y reconexion
+## 13. Actualizaciones y reconexion
 
 Si modificas ficheros del modulo, reinicia el cliente para que vuelva a cargar el servidor MCP.
 
@@ -562,7 +721,7 @@ En Codex o Claude Desktop, lo normal es cerrar y volver a abrir el cliente o ini
 
 En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automaticamente. Hay que refrescar o escanear herramientas otra vez. Si la app ya esta publicada en un workspace, un administrador debe revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app.
 
-## 13. Comandos utiles
+## 14. Comandos utiles
 
 En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. El comando `prestashop-local-mcp ...` solo funciona si la carpeta `Scripts` de Python esta en el `PATH`.
 
@@ -715,7 +874,7 @@ Ejecutar tests seguros:
 .\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py tests\test_cli.py tests\test_windows_installer.py
 ```
 
-## 14. Seguridad
+## 15. Seguridad
 
 - No subas `.env` a Git.
 - Usa una clave de Webservice con los permisos minimos necesarios.
@@ -723,7 +882,7 @@ Ejecutar tests seguros:
 - Revisa las acciones de escritura antes de aprobarlas desde el cliente.
 - Haz copia de seguridad de la tienda antes de probar acciones masivas.
 
-## 15. Referencias y creditos
+## 16. Referencias y creditos
 
 - Repositorio del proyecto: https://github.com/golfo161/prestashop-local-mcp
 - Basado originalmente en: https://github.com/latinogino/prestashop-mcp

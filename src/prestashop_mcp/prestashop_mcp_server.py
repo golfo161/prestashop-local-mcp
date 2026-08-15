@@ -133,7 +133,8 @@ async def handle_list_tools():
                     "category_id": {"type": "string", "description": "Category ID"},
                     "quantity": {"type": "integer", "description": "Initial stock quantity"},
                     "reference": {"type": "string", "description": "Product reference/SKU"},
-                    "weight": {"type": "number", "description": "Product weight"}
+                    "weight": {"type": "number", "description": "Product weight"},
+                    "image_path": {"type": "string", "description": "Optional local absolute path to the product image"}
                 },
                 "required": ["name", "price"],
                 "additionalProperties": False
@@ -540,7 +541,8 @@ async def handle_call_tool(name: str, arguments: dict):
                     category_id=arguments.get('category_id'),
                     quantity=arguments.get('quantity'),
                     reference=arguments.get('reference'),
-                    weight=arguments.get('weight')
+                    weight=arguments.get('weight'),
+                    image_path=arguments.get('image_path')
                 )
             
             elif name == "update_product":

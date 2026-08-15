@@ -1,0 +1,11 @@
+# Plantilla para crear un producto con create_product.
+# Sustituye los valores de ejemplo antes de pedir al asistente que cree el producto.
+producto:
+  nombre: "Nombre del producto"
+  precio: 0.00
+  descripcion: "Descripcion breve del producto."
+  categoria_id: "2"
+  cantidad: 0
+  referencia: "REFERENCIA-SKU"
+  peso: 0.00
+  imagen: "C:\\ruta\\absoluta\\a\\imagen.jpg"

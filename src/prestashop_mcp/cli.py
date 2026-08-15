@@ -50,6 +50,38 @@ def _write_env_file(path: Path, shop_url: str, api_key: str, log_level: str, for
         path.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
 
+def _existing_config_action(path: Path, force: bool) -> str:
+    """Return how setup should handle an existing config file."""
+    if force or not path.exists():
+        return "overwrite"
+
+    click.echo(f"Config file already exists: {path}")
+    return click.prompt(
+        "Choose what to do",
+        type=click.Choice(["overwrite", "omit", "cancel"], case_sensitive=False),
+        default="omit",
+        show_choices=True,
+    ).lower()
+
+
+def _read_env_file_config(path: Path) -> Config:
+    values = {}
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        values[key.strip().lstrip("\ufeff")] = value.strip()
+
+    config = Config(
+        shop_url=values.get("PRESTASHOP_SHOP_URL", ""),
+        api_key=values.get("PRESTASHOP_API_KEY", ""),
+        log_level=values.get("LOG_LEVEL", "INFO"),
+    )
+    config.validate_config()
+    return config
+
+
 async def _test_connection(config: Config) -> dict:
     async with PrestaShopClient(config) as client:
         return await client.get_configurations()
@@ -172,16 +204,26 @@ def init(config_file: Path, force: bool, skip_test: bool):
     click.echo(f"Config file: {config_file}")
     click.echo("")
 
-    shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
-    api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
-    log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+    action = _existing_config_action(config_file, force)
+    if action == "cancel":
+        raise click.ClickException("Setup cancelled. Existing config file was left unchanged.")
 
-    config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
-    config.validate_config()
-    _write_env_file(config_file, shop_url, api_key, log_level, force=force)
+    if action == "omit":
+        config = _read_env_file_config(config_file)
+        shop_url = config.shop_url
+        api_key = config.api_key
+        click.echo("Keeping existing config file unchanged.")
+    else:
+        shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
+        api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
+        log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+
+        config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
+        config.validate_config()
+        _write_env_file(config_file, shop_url, api_key, log_level, force=True)
 
     click.echo("")
-    click.echo(f"Config saved: {config_file}")
+    click.echo(f"Config saved: {config_file}" if action != "omit" else f"Config kept: {config_file}")
     click.echo(f"Shop URL: {shop_url}")
     click.echo(f"API key: {_mask_secret(api_key)}")
 
@@ -218,16 +260,28 @@ def setup(
     click.echo("This wizard stores credentials locally and never writes the API key to Codex or Claude config.")
     click.echo("")
 
-    shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
-    api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
-    log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+    action = _existing_config_action(config_file, force)
+    if action == "cancel":
+        raise click.ClickException("Setup cancelled. Existing config file was left unchanged.")
 
-    config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
-    config.validate_config()
-    _write_env_file(config_file, shop_url, api_key, log_level, force=force)
+    if action == "omit":
+        config = _read_env_file_config(config_file)
+        api_key = config.api_key
+        click.echo("Keeping existing local credential file unchanged.")
+    else:
+        shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
+        api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
+        log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
+
+        config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
+        config.validate_config()
+        _write_env_file(config_file, shop_url, api_key, log_level, force=True)
 
     click.echo("")
-    click.echo(f"Local credential file saved: {config_file}")
+    if action == "omit":
+        click.echo(f"Local credential file kept: {config_file}")
+    else:
+        click.echo(f"Local credential file saved: {config_file}")
     click.echo(f"API key: {_mask_secret(api_key)}")
 
     if not skip_test:

@@ -120,7 +120,7 @@ if not exist "%PYTHON%" (
   pause
   exit /b 1
 )
-"%PYTHON%" -m prestashop_mcp.cli setup --force
+"%PYTHON%" -m prestashop_mcp.cli setup
 pause
 """
 
@@ -135,7 +135,7 @@ if not exist "%PYTHON%" (
 )
 "%PYTHON%" -m pip install --upgrade pip
 "%PYTHON%" -m pip install --upgrade "{package_url}"
-"%PYTHON%" -m prestashop_mcp.cli setup --force
+"%PYTHON%" -m prestashop_mcp.cli setup
 pause
 """
 

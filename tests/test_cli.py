@@ -95,6 +95,52 @@ def test_init_writes_config_without_echoing_secret(tmp_path):
     assert "secret-api-key-123" not in result.output
 
 
+def test_init_can_omit_existing_config_without_prompting_credentials(tmp_path):
+    config_file = tmp_path / ".env"
+    config_file.write_text(
+        "PRESTASHOP_SHOP_URL=https://existing.example.com\n"
+        "PRESTASHOP_API_KEY=existing-secret\n"
+        "LOG_LEVEL=INFO\n",
+        encoding="utf-8-sig",
+    )
+
+    result = CliRunner().invoke(
+        main,
+        ["init", "--config-file", str(config_file), "--skip-test"],
+        input="omit\n",
+    )
+
+    assert result.exit_code == 0
+    content = config_file.read_text(encoding="utf-8")
+    assert "PRESTASHOP_SHOP_URL=https://existing.example.com" in content
+    assert "PRESTASHOP_API_KEY=existing-secret" in content
+    assert "Keeping existing config file unchanged." in result.output
+    assert "existing-secret" not in result.output
+
+
+def test_init_can_overwrite_existing_config_after_confirmation(tmp_path):
+    config_file = tmp_path / ".env"
+    config_file.write_text(
+        "PRESTASHOP_SHOP_URL=https://old.example.com\n"
+        "PRESTASHOP_API_KEY=old-secret\n"
+        "LOG_LEVEL=INFO\n",
+        encoding="utf-8",
+    )
+
+    result = CliRunner().invoke(
+        main,
+        ["init", "--config-file", str(config_file), "--skip-test"],
+        input="overwrite\nhttps://new.example.com\nnew-secret\nDEBUG\n",
+    )
+
+    assert result.exit_code == 0
+    content = config_file.read_text(encoding="utf-8")
+    assert "PRESTASHOP_SHOP_URL=https://new.example.com" in content
+    assert "PRESTASHOP_API_KEY=new-secret" in content
+    assert "LOG_LEVEL=DEBUG" in content
+    assert "new-secret" not in result.output
+
+
 def test_setup_can_write_env_and_codex_config_without_echoing_secret(tmp_path, monkeypatch):
     config_file = tmp_path / "prestashop" / ".env"
     codex_config = tmp_path / ".codex" / "config.toml"

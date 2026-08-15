@@ -116,3 +116,30 @@ async def test_get_products_by_category_accepts_category_id():
     assert result["category"]["name"] == "AGOTADOS"
     assert result["products"] == []
     assert client.requests[0]["endpoint"] == "categories/145"
+
+
+class ImageUploadClient(SequenceClient):
+    def __init__(self, responses):
+        super().__init__(responses)
+        self.uploads = []
+
+    async def upload_product_image(self, product_id, image_path):
+        self.uploads.append({"product_id": product_id, "image_path": image_path})
+        return {"status": "success", "product_id": str(product_id), "image_path": image_path}
+
+
+@pytest.mark.asyncio
+async def test_create_product_can_upload_image_after_creation():
+    client = ImageUploadClient([{"product": {"id": "10"}}])
+
+    result = await client.create_product(
+        name="Test product",
+        price=12.5,
+        category_id="2",
+        image_path=r"C:\images\product.jpg",
+    )
+
+    assert client.requests[0]["method"] == "POST"
+    assert client.requests[0]["endpoint"] == "products"
+    assert client.uploads == [{"product_id": "10", "image_path": r"C:\images\product.jpg"}]
+    assert result["image_upload"]["status"] == "success"
