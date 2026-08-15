@@ -278,7 +278,7 @@ El instalador preguntara:
 1. La carpeta donde quieres instalar el MCP.
 2. La URL de la tienda PrestaShop.
 3. La API key del Webservice con entrada oculta.
-4. El ID numerico de la regla de impuestos para nuevos productos. Por ejemplo, `ES Standard rate (21%)` puede tener el ID `15` en tu tienda.
+4. `ID regla fiscal productos nuevos (ej. 15 = ES Standard rate (21%))`.
 5. Si quieres conectar Codex en ChatGPT Desktop.
 6. Si quieres conectar Claude Desktop.
 
@@ -364,7 +364,7 @@ El asistente hace todo el despliegue local:
 
 1. Solicita la URL de la tienda PrestaShop.
 2. Solicita la API key con entrada oculta.
-3. Solicita el ID de la regla de impuestos para nuevos productos.
+3. Solicita el ID de regla fiscal para productos nuevos.
 4. Guarda las credenciales y parametros locales en `%APPDATA%\prestashop-local-mcp\.env`.
 5. Prueba la conexion con la API.
 6. Pregunta si quieres conectar Codex en ChatGPT Desktop.

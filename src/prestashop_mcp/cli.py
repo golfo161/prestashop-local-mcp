@@ -226,7 +226,7 @@ def init(config_file: Path, force: bool, skip_test: bool):
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
         tax_rules_group_id = click.prompt(
-            "ID numerico de la regla de impuestos para nuevos productos. Ejemplo: ES Standard rate (21%) puede ser 15 en tu tienda",
+            "ID regla fiscal productos nuevos (ej. 15 = ES Standard rate (21%))",
             type=str,
         ).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
@@ -290,7 +290,7 @@ def setup(
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
         tax_rules_group_id = click.prompt(
-            "ID numerico de la regla de impuestos para nuevos productos. Ejemplo: ES Standard rate (21%) puede ser 15 en tu tienda",
+            "ID regla fiscal productos nuevos (ej. 15 = ES Standard rate (21%))",
             type=str,
         ).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
