@@ -265,6 +265,86 @@ async def test_create_product_writes_configured_language_fields():
 
 
 @pytest.mark.asyncio
+async def test_create_product_writes_summary_to_short_description_and_seo_fields():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name={
+            "es": "Lana Merino Azul",
+            "en": "Blue Merino Wool",
+            "fr": "Laine Merinos Bleue",
+        },
+        price=8.95,
+        summary={
+            "es": "Lana suave para tejer prendas de invierno.",
+            "en": "Soft yarn for knitting winter garments.",
+            "fr": "Laine douce pour tricoter des vetements d'hiver.",
+        },
+        description={
+            "es": "Lana merino suave, calida y facil de trabajar para proyectos de punto y crochet.",
+            "en": "Soft, warm merino yarn that is easy to work with for knitting and crochet projects.",
+            "fr": "Laine merinos douce, chaude et facile a travailler pour les projets de tricot et crochet.",
+        },
+        meta_title={
+            "es": "Lana Merino Azul",
+            "en": "Blue Merino Wool",
+            "fr": "Laine Merinos Bleue",
+        },
+        meta_description={
+            "es": "Compra lana merino azul suave para punto y crochet.",
+            "en": "Buy soft blue merino wool for knitting and crochet.",
+            "fr": "Achetez une laine merinos bleue douce pour tricot et crochet.",
+        },
+        meta_keywords={
+            "es": "lana merino, lana azul, punto, crochet",
+            "en": "merino wool, blue yarn, knitting, crochet",
+            "fr": "laine merinos, laine bleue, tricot, crochet",
+        },
+        link_rewrite={
+            "es": "lana-merino-azul",
+            "en": "blue-merino-wool",
+            "fr": "laine-merinos-bleue",
+        },
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["description_short"] == [
+        {"id": 1, "value": "Lana suave para tejer prendas de invierno."},
+        {"id": 5, "value": "Soft yarn for knitting winter garments."},
+        {"id": 6, "value": "Laine douce pour tricoter des vetements d'hiver."},
+    ]
+    assert product["description"][0]["value"].startswith("Lana merino suave")
+    assert product["meta_title"][1]["value"] == "Blue Merino Wool"
+    assert product["meta_description"][2]["value"].startswith("Achetez une laine")
+    assert product["meta_keywords"][0]["value"] == "lana merino, lana azul, punto, crochet"
+    assert product["link_rewrite"] == [
+        {"id": 1, "value": "lana-merino-azul"},
+        {"id": 5, "value": "blue-merino-wool"},
+        {"id": 6, "value": "laine-merinos-bleue"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_create_product_generates_basic_seo_when_only_summary_is_provided():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name={"es": "Lana Algodon Natural"},
+        price=5.5,
+        summary={"es": "Hilo natural suave para labores de verano."},
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["description"][0]["value"] == "Hilo natural suave para labores de verano."
+    assert product["description_short"][0]["value"] == "Hilo natural suave para labores de verano."
+    assert product["meta_title"][0]["value"] == "Lana Algodon Natural"
+    assert product["meta_description"][0]["value"] == "Hilo natural suave para labores de verano."
+    assert "lana" in product["meta_keywords"][0]["value"]
+
+
+@pytest.mark.asyncio
 async def test_create_product_fills_missing_translations_from_spanish():
     client = SequenceClient([{"product": {"id": "10"}}])
 

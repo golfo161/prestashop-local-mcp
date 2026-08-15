@@ -149,6 +149,64 @@ class PrestaShopClient:
                 return [{"id": lang_id, "value": value} for lang_id in language_ids]
 
         return self._init_multilingual_field(value)
+
+    def _build_multilingual_from_languages(
+        self,
+        builder: Any
+    ) -> List[Dict[str, Any]]:
+        """Build a multilingual field from a callback that receives each language."""
+        return [
+            {"id": language["id"], "value": builder(language)}
+            for language in self.available_languages
+        ]
+
+    def _truncate_text(self, value: str, max_length: int) -> str:
+        """Truncate text without leaving a dangling partial word when possible."""
+        value = re.sub(r"\s+", " ", str(value or "")).strip()
+        if len(value) <= max_length:
+            return value
+        truncated = value[:max_length].rsplit(" ", 1)[0].strip()
+        return truncated or value[:max_length].strip()
+
+    def _generate_meta_title(self, name: Any, language: Dict[str, Any]) -> str:
+        """Generate a concise SEO title from the localized product name."""
+        product_name = self._get_translation(name, language)
+        return self._truncate_text(product_name, 70)
+
+    def _generate_meta_description(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
+        """Generate a natural SEO description from summary or name."""
+        summary_text = self._get_translation(summary, language)
+        if summary_text:
+            return self._truncate_text(summary_text, 160)
+        product_name = self._get_translation(name, language)
+        return self._truncate_text(product_name, 160)
+
+    def _generate_meta_keywords(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
+        """Generate a small keyword list without keyword stuffing."""
+        text = f"{self._get_translation(name, language)} {self._get_translation(summary, language)}"
+        words = [
+            word.lower()
+            for word in re.findall(r"[A-Za-zÀ-ÿ0-9]{3,}", text)
+        ]
+        ignored = {
+            "con", "para", "por", "una", "uno", "los", "las", "del", "the",
+            "and", "for", "with", "des", "les", "une", "pour", "avec"
+        }
+        keywords = []
+        for word in words:
+            if word in ignored or word in keywords:
+                continue
+            keywords.append(word)
+            if len(keywords) == 8:
+                break
+        return ", ".join(keywords)
+
+    def _generate_long_description(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
+        """Generate a useful long description when only a summary is provided."""
+        summary_text = self._get_translation(summary, language)
+        if summary_text:
+            return summary_text
+        return self._get_translation(name, language)
     
     async def _make_request(
         self, 
@@ -215,10 +273,13 @@ class PrestaShopClient:
 
     def _generate_link_rewrite(self, name: str) -> str:
         """Generate URL-friendly link rewrite from name."""
+        normalized = unicodedata.normalize("NFKD", str(name or ""))
+        normalized = normalized.encode("ascii", "ignore").decode("ascii")
         # Convert to lowercase and replace spaces/special chars with hyphens
-        link_rewrite = re.sub(r'[^a-zA-Z0-9\s]', '', name.lower())
+        link_rewrite = re.sub(r'[^a-zA-Z0-9\s-]', '', normalized.lower())
         link_rewrite = re.sub(r'\s+', '-', link_rewrite.strip())
-        return link_rewrite
+        link_rewrite = re.sub(r'-+', '-', link_rewrite).strip("-")
+        return link_rewrite or "product"
 
     def _build_product_category_associations(self, category_id: str) -> Dict[str, Any]:
         """Build product category associations required for catalog visibility."""
@@ -568,6 +629,11 @@ class PrestaShopClient:
         name: Any,
         price: float,
         description: Optional[Any] = None,
+        summary: Optional[Any] = None,
+        meta_title: Optional[Any] = None,
+        meta_description: Optional[Any] = None,
+        meta_keywords: Optional[Any] = None,
+        link_rewrite: Optional[Any] = None,
         category_id: Optional[str] = None,
         quantity: Optional[int] = None,
         reference: Optional[str] = None,
@@ -575,7 +641,8 @@ class PrestaShopClient:
         image_path: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
-        description_value = description if description is not None else ""
+        summary_value = summary if summary is not None else (description if description is not None else "")
+        description_value = description if description is not None and summary is not None else None
         
         default_category_id = str(category_id) if category_id else "2"
 
@@ -585,17 +652,30 @@ class PrestaShopClient:
                 # Multilingual fields - properly initialized for all languages
                 "name": self._build_multilingual_field(name),
                 "link_rewrite": self._build_multilingual_field(
-                    name,
+                    link_rewrite if link_rewrite is not None else name,
                     transform=self._generate_link_rewrite
                 ),
-                "description": self._build_multilingual_field(description_value),
-                "description_short": self._build_multilingual_field(description_value, max_length=160),
-                "meta_title": self._build_multilingual_field(name, max_length=70),
-                "meta_description": self._build_multilingual_field(
-                    description_value if description else name,
-                    max_length=160
+                "description": self._build_multilingual_from_languages(
+                    lambda language: self._get_translation(description_value, language)
+                    if description_value is not None
+                    else self._generate_long_description(name, summary_value, language)
                 ),
-                "meta_keywords": self._init_multilingual_field(""),
+                "description_short": self._build_multilingual_field(summary_value, max_length=800),
+                "meta_title": self._build_multilingual_from_languages(
+                    lambda language: self._get_translation(meta_title, language)
+                    if meta_title is not None
+                    else self._generate_meta_title(name, language)
+                ),
+                "meta_description": self._build_multilingual_from_languages(
+                    lambda language: self._get_translation(meta_description, language)
+                    if meta_description is not None
+                    else self._generate_meta_description(name, summary_value, language)
+                ),
+                "meta_keywords": self._build_multilingual_from_languages(
+                    lambda language: self._get_translation(meta_keywords, language)
+                    if meta_keywords is not None
+                    else self._generate_meta_keywords(name, summary_value, language)
+                ),
                 
                 # CRITICAL: State field for backend visibility (was missing!)
                 "state": "1",  # 1 = Published, 0 = Draft (invisible in backend)

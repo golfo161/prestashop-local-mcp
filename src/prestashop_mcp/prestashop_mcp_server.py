@@ -156,7 +156,82 @@ async def handle_list_tools():
                                 "additionalProperties": False
                             }
                         ],
-                        "description": "Product description. Prefer {es,en,fr}; if the user gives one language, translate it before calling this tool."
+                        "description": "Long product description. Prefer {es,en,fr}. If omitted, the MCP derives it from summary."
+                    },
+                    "summary": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "Product summary/short description. Use the user's description here when they provide a product text."
+                    },
+                    "meta_title": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO meta title. Prefer {es,en,fr}; generated from name when omitted."
+                    },
+                    "meta_description": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO meta description. Prefer {es,en,fr}; generated from summary when omitted."
+                    },
+                    "meta_keywords": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "Comma-separated SEO keywords. Prefer {es,en,fr}; generated conservatively when omitted."
+                    },
+                    "link_rewrite": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO-friendly URL slug. Prefer {es,en,fr}; generated from product name when omitted."
                     },
                     "category_id": {"type": "string", "description": "Category ID"},
                     "quantity": {"type": "integer", "description": "Initial stock quantity"},
@@ -566,6 +641,11 @@ async def handle_call_tool(name: str, arguments: dict):
                     name=arguments['name'],
                     price=arguments['price'],
                     description=arguments.get('description'),
+                    summary=arguments.get('summary'),
+                    meta_title=arguments.get('meta_title'),
+                    meta_description=arguments.get('meta_description'),
+                    meta_keywords=arguments.get('meta_keywords'),
+                    link_rewrite=arguments.get('link_rewrite'),
                     category_id=arguments.get('category_id'),
                     quantity=arguments.get('quantity'),
                     reference=arguments.get('reference'),

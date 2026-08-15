@@ -41,7 +41,7 @@ Estas son las operaciones que expone actualmente el MCP.
 
 - `get_products`: consulta productos por ID o lista productos con filtros.
 - `get_products_by_category`: lista productos asociados a una categoria por ID o nombre, incluyendo categorias secundarias.
-- `create_product`: crea un producto nuevo desactivado inicialmente. Tambien puede subir una imagen si se informa `image_path`.
+- `create_product`: crea un producto nuevo desactivado inicialmente. Tambien puede subir imagen, resumen, descripcion larga y campos SEO.
 - `update_product`: actualiza un producto existente.
 - `delete_product`: elimina un producto.
 - `update_product_stock`: cambia la cantidad de stock de un producto.
@@ -51,7 +51,9 @@ Campos habituales que puedes consultar o modificar segun la herramienta:
 
 - nombre
 - precio
-- descripcion
+- resumen
+- descripcion larga
+- SEO: meta title, meta description, keywords y URL amigable
 - categoria
 - referencia/SKU
 - peso
@@ -72,7 +74,9 @@ Campos de la plantilla:
 
 - `nombre`: obligatorio. Nombre visible del producto. Puede ser texto simple o un bloque por idioma.
 - `precio`: obligatorio. Precio de venta.
-- `descripcion`: opcional, pero recomendable para la ficha del producto. Puede ser texto simple o un bloque por idioma.
+- `resumen`: opcional, pero recomendable. Es el texto corto del producto y se guarda en el campo resumen de PrestaShop.
+- `descripcion_larga`: opcional. Si no se indica, el asistente la genera a partir del resumen.
+- `seo`: opcional. Permite aportar `meta_title`, `meta_description`, `meta_keywords` o `link_rewrite`. Si no se indica, el asistente lo genera siguiendo buenas practicas SEO.
 - `categoria_id`: opcional. Si no se indica, PrestaShop usara la categoria por defecto configurada por el MCP.
 - `cantidad`: opcional. Stock inicial.
 - `referencia`: opcional. Referencia interna o SKU.
@@ -88,10 +92,23 @@ producto:
     en: "Blue Merino Wool 100g"
     fr: "Laine merinos bleue 100g"
   precio: 5.95
-  descripcion:
+  resumen:
     es: "Ovillo de lana merino suave, ideal para prendas de invierno."
     en: "Soft merino wool ball, ideal for winter garments."
     fr: "Pelote de laine merinos douce, ideale pour les vetements d'hiver."
+  descripcion_larga:
+    es: "Lana merino suave y calida para tejer prendas de invierno, accesorios y proyectos de punto o crochet."
+    en: "Soft and warm merino wool for knitting winter garments, accessories, and crochet projects."
+    fr: "Laine merinos douce et chaude pour tricoter des vetements d'hiver, accessoires et projets crochet."
+  seo:
+    meta_title:
+      es: "Lana Merino Azul 100g"
+      en: "Blue Merino Wool 100g"
+      fr: "Laine merinos bleue 100g"
+    meta_description:
+      es: "Compra lana merino azul 100g, suave y calida para punto y crochet."
+      en: "Buy blue merino wool 100g, soft and warm for knitting and crochet."
+      fr: "Achetez une laine merinos bleue 100g, douce et chaude pour tricot et crochet."
   categoria_id: "12"
   cantidad: 20
   referencia: "MERINO-AZUL-100"
@@ -122,10 +139,25 @@ El asistente debe convertir la plantilla a los parametros de `create_product`:
     "fr": "Laine merinos bleue 100g"
   },
   "price": 5.95,
-  "description": {
+  "summary": {
     "es": "Ovillo de lana merino suave, ideal para prendas de invierno.",
     "en": "Soft merino wool ball, ideal for winter garments.",
     "fr": "Pelote de laine merinos douce, ideale pour les vetements d'hiver."
+  },
+  "description": {
+    "es": "Lana merino suave y calida para tejer prendas de invierno, accesorios y proyectos de punto o crochet.",
+    "en": "Soft and warm merino wool for knitting winter garments, accessories, and crochet projects.",
+    "fr": "Laine merinos douce et chaude pour tricoter des vetements d'hiver, accessoires et projets crochet."
+  },
+  "meta_title": {
+    "es": "Lana Merino Azul 100g",
+    "en": "Blue Merino Wool 100g",
+    "fr": "Laine merinos bleue 100g"
+  },
+  "meta_description": {
+    "es": "Compra lana merino azul 100g, suave y calida para punto y crochet.",
+    "en": "Buy blue merino wool 100g, soft and warm for knitting and crochet.",
+    "fr": "Achetez une laine merinos bleue 100g, douce et chaude pour tricot et crochet."
   },
   "category_id": "12",
   "quantity": 20,
@@ -140,9 +172,10 @@ Flujo recomendado:
 1. Copia la plantilla y rellena los datos del producto.
 2. Comprueba que la imagen existe en esa ruta local si vas a subir imagen.
 3. Pide al asistente que valide la ficha antes de crearla.
-4. El asistente llama a `create_product`.
-5. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
-6. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
+4. El asistente adapta el resumen, genera descripcion larga y completa SEO si faltan datos.
+5. El asistente llama a `create_product`.
+6. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
+7. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
 
 ### Categorias
 

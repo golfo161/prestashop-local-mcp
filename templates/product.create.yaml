@@ -6,10 +6,27 @@ producto:
     en: "Product name"
     fr: "Nom du produit"
   precio: 0.00
-  descripcion:
-    es: "Descripcion breve del producto."
-    en: "Short product description."
-    fr: "Description breve du produit."
+  resumen:
+    es: "Resumen breve del producto."
+    en: "Short product summary."
+    fr: "Resume bref du produit."
+  descripcion_larga:
+    es: "Descripcion completa del producto, con detalles utiles para la ficha."
+    en: "Complete product description with useful details for the product page."
+    fr: "Description complete du produit avec des details utiles pour la fiche."
+  seo:
+    meta_title:
+      es: "Titulo SEO del producto"
+      en: "Product SEO title"
+      fr: "Titre SEO du produit"
+    meta_description:
+      es: "Descripcion SEO clara y natural del producto."
+      en: "Clear, natural SEO description for the product."
+      fr: "Description SEO claire et naturelle du produit."
+    meta_keywords:
+      es: "palabra clave 1, palabra clave 2"
+      en: "keyword 1, keyword 2"
+      fr: "mot cle 1, mot cle 2"
   categoria_id: "2"
   cantidad: 0
   referencia: "REFERENCIA-SKU"
