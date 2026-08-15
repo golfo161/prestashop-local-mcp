@@ -143,3 +143,64 @@ async def test_create_product_can_upload_image_after_creation():
     assert client.requests[0]["endpoint"] == "products"
     assert client.uploads == [{"product_id": "10", "image_path": r"C:\images\product.jpg"}]
     assert result["image_upload"]["status"] == "success"
+
+
+@pytest.mark.asyncio
+async def test_create_product_writes_configured_language_fields():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name={
+            "es": "Producto prueba",
+            "en": "Test product",
+            "fr": "Produit test",
+        },
+        price=12.5,
+        description={
+            "es": "Descripcion en espanol",
+            "en": "English description",
+            "fr": "Description francaise",
+        },
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["name"] == [
+        {"id": 1, "value": "Producto prueba"},
+        {"id": 5, "value": "Test product"},
+        {"id": 6, "value": "Produit test"},
+    ]
+    assert product["description"] == [
+        {"id": 1, "value": "Descripcion en espanol"},
+        {"id": 5, "value": "English description"},
+        {"id": 6, "value": "Description francaise"},
+    ]
+    assert product["link_rewrite"] == [
+        {"id": 1, "value": "producto-prueba"},
+        {"id": 5, "value": "test-product"},
+        {"id": 6, "value": "produit-test"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_create_product_fills_missing_translations_from_spanish():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name={"es": "Producto prueba"},
+        price=12.5,
+        description={"es": "Descripcion base"},
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["name"] == [
+        {"id": 1, "value": "Producto prueba"},
+        {"id": 5, "value": "Producto prueba"},
+        {"id": 6, "value": "Producto prueba"},
+    ]
+    assert product["description_short"] == [
+        {"id": 1, "value": "Descripcion base"},
+        {"id": 5, "value": "Descripcion base"},
+        {"id": 6, "value": "Descripcion base"},
+    ]

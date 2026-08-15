@@ -127,9 +127,37 @@ async def handle_list_tools():
             inputSchema={
                 "type": "object",
                 "properties": {
-                    "name": {"type": "string", "description": "Product name"},
+                    "name": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "Product name. Prefer {es,en,fr}; if the user gives one language, translate it before calling this tool."
+                    },
                     "price": {"type": "number", "description": "Product price"},
-                    "description": {"type": "string", "description": "Product description"},
+                    "description": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "Product description. Prefer {es,en,fr}; if the user gives one language, translate it before calling this tool."
+                    },
                     "category_id": {"type": "string", "description": "Category ID"},
                     "quantity": {"type": "integer", "description": "Initial stock quantity"},
                     "reference": {"type": "string", "description": "Product reference/SKU"},

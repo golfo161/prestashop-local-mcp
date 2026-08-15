@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Product creation can now upload an initial image when `image_path` is provided.
 - Product creation YAML template and README workflow for assistant-guided product creation.
+- Product creation now supports Spanish, English, and French text fields for PrestaShop language IDs 1, 5, and 6.
 
 ### Changed
 - README now includes a complete grouped list of available PrestaShop MCP functionality.

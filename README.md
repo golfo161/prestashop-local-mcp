@@ -66,9 +66,9 @@ La forma mas segura de crear productos desde el asistente es preparar una ficha 
 
 Campos de la plantilla:
 
-- `nombre`: obligatorio. Nombre visible del producto.
+- `nombre`: obligatorio. Nombre visible del producto. Puede ser texto simple o un bloque por idioma.
 - `precio`: obligatorio. Precio de venta.
-- `descripcion`: opcional, pero recomendable para la ficha del producto.
+- `descripcion`: opcional, pero recomendable para la ficha del producto. Puede ser texto simple o un bloque por idioma.
 - `categoria_id`: opcional. Si no se indica, PrestaShop usara la categoria por defecto configurada por el MCP.
 - `cantidad`: opcional. Stock inicial.
 - `referencia`: opcional. Referencia interna o SKU.
@@ -79,9 +79,15 @@ Ejemplo:
 
 ```yaml
 producto:
-  nombre: "Lana Merino Azul 100g"
+  nombre:
+    es: "Lana Merino Azul 100g"
+    en: "Blue Merino Wool 100g"
+    fr: "Laine merinos bleue 100g"
   precio: 5.95
-  descripcion: "Ovillo de lana merino suave, ideal para prendas de invierno."
+  descripcion:
+    es: "Ovillo de lana merino suave, ideal para prendas de invierno."
+    en: "Soft merino wool ball, ideal for winter garments."
+    fr: "Pelote de laine merinos douce, ideale pour les vetements d'hiver."
   categoria_id: "12"
   cantidad: 20
   referencia: "MERINO-AZUL-100"
@@ -95,13 +101,28 @@ Antes de crear el producto, pide al asistente:
 Revisa esta plantilla de producto. Si falta algun dato importante, preguntame antes de crearlo. Si esta correcta, crea el producto en PrestaShop usando create_product.
 ```
 
+Idiomas:
+
+- La tienda usa espanol, ingles y frances.
+- Si el usuario especifica `es`, `en` y `fr`, el MCP usa esas traducciones.
+- Si el usuario solo escribe un texto en espanol, el asistente debe traducirlo a ingles y frances antes de llamar a `create_product`.
+- Si falta alguna traduccion, el MCP usa el texto espanol como respaldo para que PrestaShop reciba siempre todos los idiomas activos.
+
 El asistente debe convertir la plantilla a los parametros de `create_product`:
 
 ```json
 {
-  "name": "Lana Merino Azul 100g",
+  "name": {
+    "es": "Lana Merino Azul 100g",
+    "en": "Blue Merino Wool 100g",
+    "fr": "Laine merinos bleue 100g"
+  },
   "price": 5.95,
-  "description": "Ovillo de lana merino suave, ideal para prendas de invierno.",
+  "description": {
+    "es": "Ovillo de lana merino suave, ideal para prendas de invierno.",
+    "en": "Soft merino wool ball, ideal for winter garments.",
+    "fr": "Pelote de laine merinos douce, ideale pour les vetements d'hiver."
+  },
   "category_id": "12",
   "quantity": 20,
   "reference": "MERINO-AZUL-100",

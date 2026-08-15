@@ -28,9 +28,10 @@ class PrestaShopClient:
         self.base_url = config.shop_url.rstrip('/') + '/api/'
         self.session: Optional[aiohttp.ClientSession] = None
         self.available_languages = [
-            {"id": 1, "name": "Default"},
-            {"id": 2, "name": "Secondary"}
-        ]  # Default language setup; can be replaced by dynamic detection later.
+            {"id": 1, "iso_code": "es", "name": "Spanish"},
+            {"id": 5, "iso_code": "en", "name": "English"},
+            {"id": 6, "iso_code": "fr", "name": "French"},
+        ]
     
     async def _get_session(self) -> aiohttp.ClientSession:
         """Get or create aiohttp session."""
@@ -86,6 +87,51 @@ class PrestaShopClient:
             {"id": lang["id"], "value": value}
             for lang in self.available_languages
         ]
+
+    def _get_translation(self, value: Any, language: Dict[str, Any], fallback: str = "") -> str:
+        """Extract a translation for a language, with Spanish/default fallback."""
+        if not isinstance(value, dict):
+            return str(value) if value is not None else fallback
+
+        iso_code = str(language.get("iso_code", "")).lower()
+        language_id = str(language.get("id", ""))
+        aliases = {
+            "es": ["es", "spa", "spanish", "espanol", "español", "castellano", "1"],
+            "en": ["en", "eng", "english", "ingles", "inglés", "5"],
+            "fr": ["fr", "fra", "fre", "french", "frances", "francés", "6"],
+        }
+
+        keys = [iso_code, language_id, *aliases.get(iso_code, [])]
+        for key in keys:
+            if key in value and value[key] not in (None, ""):
+                return str(value[key])
+
+        for key in ["es", "spa", "spanish", "espanol", "español", "castellano", "1", "default"]:
+            if key in value and value[key] not in (None, ""):
+                return str(value[key])
+
+        for item in value.values():
+            if item not in (None, ""):
+                return str(item)
+
+        return fallback
+
+    def _build_multilingual_field(
+        self,
+        value: Any = "",
+        max_length: Optional[int] = None,
+        transform: Optional[Any] = None
+    ) -> List[Dict[str, Any]]:
+        """Build a multilingual field for the configured PrestaShop languages."""
+        field = []
+        for language in self.available_languages:
+            translated = self._get_translation(value, language)
+            if transform:
+                translated = transform(translated)
+            if max_length is not None:
+                translated = translated[:max_length]
+            field.append({"id": language["id"], "value": translated})
+        return field
 
     def _replace_multilingual_values(
         self,
@@ -507,9 +553,9 @@ class PrestaShopClient:
     
     async def create_product(
         self,
-        name: str,
+        name: Any,
         price: float,
-        description: Optional[str] = None,
+        description: Optional[Any] = None,
         category_id: Optional[str] = None,
         quantity: Optional[int] = None,
         reference: Optional[str] = None,
@@ -517,21 +563,23 @@ class PrestaShopClient:
         image_path: Optional[str] = None
     ) -> Dict[str, Any]:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
-        link_rewrite = self._generate_link_rewrite(name)
+        description_value = description if description is not None else ""
         
         # CRITICAL FIX: Complete product initialization with all required fields
         product_data = {
             "product": {
                 # Multilingual fields - properly initialized for all languages
-                "name": self._init_multilingual_field(name),
-                "link_rewrite": self._init_multilingual_field(link_rewrite),
-                "description": self._init_multilingual_field(description if description else ""),
-                "description_short": self._init_multilingual_field(
-                    description[:160] if description else ""
+                "name": self._build_multilingual_field(name),
+                "link_rewrite": self._build_multilingual_field(
+                    name,
+                    transform=self._generate_link_rewrite
                 ),
-                "meta_title": self._init_multilingual_field(name[:70]),
-                "meta_description": self._init_multilingual_field(
-                    description[:160] if description else name
+                "description": self._build_multilingual_field(description_value),
+                "description_short": self._build_multilingual_field(description_value, max_length=160),
+                "meta_title": self._build_multilingual_field(name, max_length=70),
+                "meta_description": self._build_multilingual_field(
+                    description_value if description else name,
+                    max_length=160
                 ),
                 "meta_keywords": self._init_multilingual_field(""),
                 
