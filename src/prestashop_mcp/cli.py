@@ -143,7 +143,7 @@ def _install_codex_config(config_file: Path, codex_config: Path) -> Optional[Pat
     pattern = r"(?ms)^\[mcp_servers\.prestashop\]\r?\n.*?(?=^\[|\Z)"
 
     if re.search(pattern, content):
-        content = re.sub(pattern, block.rstrip() + "\n\n", content, count=1)
+        content = re.sub(pattern, lambda _match: block.rstrip() + "\n\n", content, count=1)
     else:
         content = content.rstrip() + "\n\n" + block
 

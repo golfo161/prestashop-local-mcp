@@ -56,6 +56,39 @@ def test_install_codex_writes_config_block(tmp_path):
     assert f"cwd = '{config_file.parent}'" in content
 
 
+def test_install_codex_replaces_existing_block_with_windows_paths(tmp_path, monkeypatch):
+    config_file = tmp_path / "prestashop" / ".env"
+    codex_config = tmp_path / ".codex" / "config.toml"
+    codex_config.parent.mkdir(parents=True)
+    codex_config.write_text(
+        "[mcp_servers.prestashop]\n"
+        "command = 'C:\\Users\\old\\venv\\Scripts\\python.exe'\n"
+        "args = ['-m', 'prestashop_mcp.prestashop_mcp_server']\n\n"
+        "[other]\n"
+        "enabled = true\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        "prestashop_mcp.cli._python_command",
+        lambda: "C:\\Users\\new\\venv\\Scripts\\python.exe",
+    )
+
+    result = CliRunner().invoke(
+        main,
+        [
+            "install-codex",
+            "--config-file", str(config_file),
+            "--codex-config", str(codex_config),
+        ],
+    )
+
+    assert result.exit_code == 0
+    content = codex_config.read_text(encoding="utf-8")
+    assert "C:\\Users\\new\\venv\\Scripts\\python.exe" in content
+    assert "C:\\Users\\old\\venv\\Scripts\\python.exe" not in content
+    assert "[other]" in content
+
+
 def test_install_claude_merges_mcp_server(tmp_path):
     config_file = tmp_path / "prestashop" / ".env"
     claude_config = tmp_path / "Claude" / "claude_desktop_config.json"
