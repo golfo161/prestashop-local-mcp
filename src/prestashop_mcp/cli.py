@@ -225,7 +225,11 @@ def init(config_file: Path, force: bool, skip_test: bool):
     else:
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
-        tax_rules_group_id = click.prompt("Tax rules group ID for new products", default="1", type=str).strip()
+        tax_rules_group_id = click.prompt(
+            "ID de la regla de impuestos para nuevos productos, por ejemplo ES Standard rate (21%)",
+            default="1",
+            type=str,
+        ).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
 
         config = Config(
@@ -286,7 +290,11 @@ def setup(
     else:
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
-        tax_rules_group_id = click.prompt("Tax rules group ID for new products", default="1", type=str).strip()
+        tax_rules_group_id = click.prompt(
+            "ID de la regla de impuestos para nuevos productos, por ejemplo ES Standard rate (21%)",
+            default="1",
+            type=str,
+        ).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
 
         config = Config(
@@ -345,7 +353,7 @@ def doctor():
     config = Config.from_env()
     click.echo(f"Shop URL: {config.shop_url}")
     click.echo(f"API key configured: {_mask_secret(config.api_key)}")
-    click.echo(f"Tax rules group ID: {config.tax_rules_group_id}")
+    click.echo(f"ID de la regla de impuestos: {config.tax_rules_group_id}")
 
     result = asyncio.run(_test_connection(config))
     if isinstance(result, dict) and "error" in result:

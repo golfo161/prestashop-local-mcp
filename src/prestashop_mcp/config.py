@@ -47,7 +47,7 @@ class Config(BaseModel):
     )
 
     tax_rules_group_id: str = Field(
-        description="Default PrestaShop tax rules group ID for new products",
+        description="Default PrestaShop tax rule group ID for new products",
         default_factory=lambda: os.getenv("PRESTASHOP_TAX_RULES_GROUP_ID", "1")
     )
     
