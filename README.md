@@ -26,6 +26,8 @@ Herramientas principales:
 
 Recomendacion: empieza siempre con herramientas de lectura antes de usar acciones que creen, modifiquen o borren datos.
 
+Cuando trabajes con la tienda desde un asistente, las respuestas deben ser operativas y breves: validar datos, pedir confirmacion si hace falta, ejecutar la accion y devolver solo el resultado necesario.
+
 ## 2. Funcionalidades disponibles
 
 Estas son las operaciones que expone actualmente el MCP.
@@ -39,7 +41,7 @@ Estas son las operaciones que expone actualmente el MCP.
 
 - `get_products`: consulta productos por ID o lista productos con filtros.
 - `get_products_by_category`: lista productos asociados a una categoria por ID o nombre, incluyendo categorias secundarias.
-- `create_product`: crea un producto nuevo. Tambien puede subir una imagen si se informa `image_path`.
+- `create_product`: crea un producto nuevo desactivado inicialmente. Tambien puede subir una imagen si se informa `image_path`.
 - `update_product`: actualiza un producto existente.
 - `delete_product`: elimina un producto.
 - `update_product_stock`: cambia la cantidad de stock de un producto.
@@ -59,6 +61,8 @@ Campos habituales que puedes consultar o modificar segun la herramienta:
 - imagen inicial durante la creacion
 
 Para subir una imagen al crear un producto, usa `create_product` con una ruta local absoluta en `image_path`, por ejemplo `C:\Users\usuario\Pictures\producto.jpg`. El Webservice de PrestaShop debe tener permisos sobre el recurso de imagenes/productos.
+
+Los productos creados con `create_product` quedan desactivados por defecto. Activalos mas adelante con `update_product` cuando ya esten revisados.
 
 ### Plantilla recomendada para crear productos
 
@@ -137,7 +141,7 @@ Flujo recomendado:
 2. Comprueba que la imagen existe en esa ruta local si vas a subir imagen.
 3. Pide al asistente que valide la ficha antes de crearla.
 4. El asistente llama a `create_product`.
-5. El MCP crea el producto y, si se indico `image_path`, sube la imagen al producto creado.
+5. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
 6. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
 
 ### Categorias

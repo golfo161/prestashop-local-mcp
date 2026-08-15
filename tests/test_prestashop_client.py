@@ -146,6 +146,20 @@ async def test_create_product_can_upload_image_after_creation():
 
 
 @pytest.mark.asyncio
+async def test_create_product_starts_disabled():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    await client.create_product(
+        name="Disabled product",
+        price=12.5,
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["active"] == "0"
+
+
+@pytest.mark.asyncio
 async def test_create_product_writes_configured_language_fields():
     client = SequenceClient([{"product": {"id": "10"}}])
 

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Product creation now supports Spanish, English, and French text fields for PrestaShop language IDs 1, 5, and 6.
 
 ### Changed
+- New products are now created disabled by default and can be activated later with `update_product`.
 - README now includes a complete grouped list of available PrestaShop MCP functionality.
 - Assisted setup now asks whether to overwrite, omit, or cancel when the per-user `.env` already exists.
 - Generated setup/update batch files now run the setup wizard without forcing credential overwrite.

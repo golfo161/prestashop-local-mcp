@@ -588,7 +588,7 @@ class PrestaShopClient:
                 
                 # Core product fields
                 "price": str(price),
-                "active": "1",  # Product is active
+                "active": "0",  # New products start disabled until explicitly activated later.
                 "available_for_order": "1",  # Can be ordered
                 "show_price": "1",  # Price is visible
                 "indexed": "1",  # Include in search index
