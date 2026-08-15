@@ -32,7 +32,14 @@ def _mask_secret(value: str) -> str:
     return f"{value[:4]}...{value[-4:]}"
 
 
-def _write_env_file(path: Path, shop_url: str, api_key: str, log_level: str, force: bool) -> None:
+def _write_env_file(
+    path: Path,
+    shop_url: str,
+    api_key: str,
+    log_level: str,
+    force: bool,
+    tax_rules_group_id: str = "1",
+) -> None:
     if path.exists() and not force:
         raise click.ClickException(
             f"Config file already exists: {path}. Use --force to overwrite it."
@@ -42,6 +49,7 @@ def _write_env_file(path: Path, shop_url: str, api_key: str, log_level: str, for
     content = (
         f"PRESTASHOP_SHOP_URL={shop_url.rstrip('/')}\n"
         f"PRESTASHOP_API_KEY={api_key}\n"
+        f"PRESTASHOP_TAX_RULES_GROUP_ID={tax_rules_group_id}\n"
         f"LOG_LEVEL={log_level}\n"
     )
     path.write_text(content, encoding="utf-8")
@@ -77,6 +85,7 @@ def _read_env_file_config(path: Path) -> Config:
         shop_url=values.get("PRESTASHOP_SHOP_URL", ""),
         api_key=values.get("PRESTASHOP_API_KEY", ""),
         log_level=values.get("LOG_LEVEL", "INFO"),
+        tax_rules_group_id=values.get("PRESTASHOP_TAX_RULES_GROUP_ID", "1"),
     )
     config.validate_config()
     return config
@@ -216,11 +225,17 @@ def init(config_file: Path, force: bool, skip_test: bool):
     else:
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
+        tax_rules_group_id = click.prompt("Tax rules group ID for new products", default="1", type=str).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
 
-        config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
+        config = Config(
+            shop_url=shop_url,
+            api_key=api_key,
+            log_level=log_level,
+            tax_rules_group_id=tax_rules_group_id,
+        )
         config.validate_config()
-        _write_env_file(config_file, shop_url, api_key, log_level, force=True)
+        _write_env_file(config_file, shop_url, api_key, log_level, force=True, tax_rules_group_id=tax_rules_group_id)
 
     click.echo("")
     click.echo(f"Config saved: {config_file}" if action != "omit" else f"Config kept: {config_file}")
@@ -271,11 +286,17 @@ def setup(
     else:
         shop_url = click.prompt("PrestaShop shop URL", type=str).strip().rstrip("/")
         api_key = click.prompt("PrestaShop Webservice API key", type=str, hide_input=True).strip()
+        tax_rules_group_id = click.prompt("Tax rules group ID for new products", default="1", type=str).strip()
         log_level = click.prompt("Log level", default="INFO", type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"]))
 
-        config = Config(shop_url=shop_url, api_key=api_key, log_level=log_level)
+        config = Config(
+            shop_url=shop_url,
+            api_key=api_key,
+            log_level=log_level,
+            tax_rules_group_id=tax_rules_group_id,
+        )
         config.validate_config()
-        _write_env_file(config_file, shop_url, api_key, log_level, force=True)
+        _write_env_file(config_file, shop_url, api_key, log_level, force=True, tax_rules_group_id=tax_rules_group_id)
 
     click.echo("")
     if action == "omit":
@@ -324,6 +345,7 @@ def doctor():
     config = Config.from_env()
     click.echo(f"Shop URL: {config.shop_url}")
     click.echo(f"API key configured: {_mask_secret(config.api_key)}")
+    click.echo(f"Tax rules group ID: {config.tax_rules_group_id}")
 
     result = asyncio.run(_test_connection(config))
     if isinstance(result, dict) and "error" in result:

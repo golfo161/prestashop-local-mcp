@@ -45,6 +45,11 @@ class Config(BaseModel):
         description="Logging level",
         default_factory=lambda: os.getenv("LOG_LEVEL", "INFO")
     )
+
+    tax_rules_group_id: str = Field(
+        description="Default PrestaShop tax rules group ID for new products",
+        default_factory=lambda: os.getenv("PRESTASHOP_TAX_RULES_GROUP_ID", "1")
+    )
     
     def validate_config(self) -> None:
         """Validate that required configuration is present."""

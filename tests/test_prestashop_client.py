@@ -160,6 +160,51 @@ async def test_create_product_starts_disabled():
 
 
 @pytest.mark.asyncio
+async def test_create_product_uses_configured_tax_rules_group():
+    client = SequenceClient([{"product": {"id": "10"}}])
+    client.config.tax_rules_group_id = "7"
+
+    await client.create_product(
+        name="Taxed product",
+        price=12.5,
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["id_tax_rules_group"] == "7"
+
+
+@pytest.mark.asyncio
+async def test_create_product_returns_stock_update_error_when_stock_permission_fails():
+    client = SequenceClient([
+        {"product": {"id": "10"}},
+        {"stock_availables": [{"id": "99"}]},
+    ])
+
+    async def failing_make_request(method, endpoint, params=None, data=None):
+        client.requests.append({
+            "method": method,
+            "endpoint": endpoint,
+            "params": params or {},
+            "data": data,
+        })
+        if endpoint == "stock_availables/99":
+            raise Exception("PUT stock_availables not allowed")
+        return client.responses.pop(0)
+
+    client._make_request = failing_make_request
+
+    result = await client.create_product(
+        name="Stock product",
+        price=12.5,
+        category_id="2",
+        quantity=10,
+    )
+
+    assert result["stock_update"]["error"] == "PUT stock_availables not allowed"
+
+
+@pytest.mark.asyncio
 async def test_create_product_writes_configured_language_fields():
     client = SequenceClient([{"product": {"id": "10"}}])
 
@@ -218,3 +263,31 @@ async def test_create_product_fills_missing_translations_from_spanish():
         {"id": 5, "value": "Descripcion base"},
         {"id": 6, "value": "Descripcion base"},
     ]
+
+
+@pytest.mark.asyncio
+async def test_update_product_stock_updates_existing_stock_record():
+    client = SequenceClient([
+        {"stock_availables": [{"id": "99"}]},
+        {
+            "stock_available": {
+                "id": "99",
+                "id_product": "10",
+                "id_product_attribute": "0",
+                "id_shop": "1",
+                "id_shop_group": "0",
+                "quantity": "0",
+                "depends_on_stock": "0",
+                "out_of_stock": "2",
+            }
+        },
+        {"stock_available": {"id": "99", "quantity": "10"}},
+    ])
+
+    result = await client.update_product_stock("10", 10)
+
+    assert client.requests[0]["endpoint"] == "stock_availables"
+    assert client.requests[1]["endpoint"] == "stock_availables/99"
+    assert client.requests[2]["method"] == "PUT"
+    assert client.requests[2]["data"]["stock_available"]["quantity"] == "10"
+    assert result["stock_available"]["quantity"] == "10"

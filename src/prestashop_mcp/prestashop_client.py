@@ -608,7 +608,7 @@ class PrestaShopClient:
                 "cache_default_attribute": "0",
                 "id_default_image": "0",
                 "id_default_combination": "0",
-                "id_tax_rules_group": "1",  # Default tax group
+                "id_tax_rules_group": str(self.config.tax_rules_group_id),
                 "id_shop_default": "1",
                 "advanced_stock_management": "0",
                 "depends_on_stock": "0",
@@ -642,9 +642,10 @@ class PrestaShopClient:
         if quantity is not None and 'product' in result and 'id' in result['product']:
             product_id = result['product']['id']
             try:
-                await self.update_product_stock(product_id, quantity)
+                result['stock_update'] = await self.update_product_stock(product_id, quantity)
             except Exception as e:
                 logging.warning(f"Product created but stock update failed: {e}")
+                result['stock_update'] = {"error": str(e)}
 
         if image_path and 'product' in result and 'id' in result['product']:
             product_id = result['product']['id']
@@ -751,20 +752,26 @@ class PrestaShopClient:
             stock_entry = stock_response['stock_availables'][0]
             stock_id = stock_entry['id']
             
-            stock_data = {
+            existing_stock = await self._make_request('GET', f'stock_availables/{stock_id}')
+            stock_data = existing_stock.get("stock_available", {})
+            stock_data.update({
+                "id": str(stock_id),
+                "id_product": str(product_id),
+                "id_product_attribute": str(stock_data.get("id_product_attribute", "0")),
+                "quantity": str(quantity),
+                "depends_on_stock": "0",
+                "out_of_stock": "2"
+            })
+
+            stock_payload = {
                 "stock_available": {
-                    "id": str(stock_id),
-                    "id_product": str(product_id),
-                    "id_product_attribute": "0",  # 0 for simple products
-                    "id_shop": "1",  # Default shop
-                    "id_shop_group": "0",
-                    "quantity": str(quantity),
-                    "depends_on_stock": "0",
-                    "out_of_stock": "2"  # Deny orders when out of stock
+                    key: value
+                    for key, value in stock_data.items()
+                    if key not in {"associations"}
                 }
             }
             
-            return await self._make_request('PUT', f'stock_availables/{stock_id}', data=stock_data)
+            return await self._make_request('PUT', f'stock_availables/{stock_id}', data=stock_payload)
         else:
             raise PrestaShopAPIError(f"Stock information not found for product {product_id}")
     

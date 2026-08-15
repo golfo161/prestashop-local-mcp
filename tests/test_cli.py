@@ -118,13 +118,14 @@ def test_init_writes_config_without_echoing_secret(tmp_path):
     result = runner.invoke(
         main,
         ["init", "--config-file", str(config_file), "--skip-test"],
-        input="https://shop.example.com\nsecret-api-key-123\nINFO\n",
+        input="https://shop.example.com\nsecret-api-key-123\n1\nINFO\n",
     )
 
     assert result.exit_code == 0
     assert config_file.exists()
     assert "PRESTASHOP_SHOP_URL=https://shop.example.com" in config_file.read_text(encoding="utf-8")
     assert "PRESTASHOP_API_KEY=secret-api-key-123" in config_file.read_text(encoding="utf-8")
+    assert "PRESTASHOP_TAX_RULES_GROUP_ID=1" in config_file.read_text(encoding="utf-8")
     assert "secret-api-key-123" not in result.output
 
 
@@ -163,7 +164,7 @@ def test_init_can_overwrite_existing_config_after_confirmation(tmp_path):
     result = CliRunner().invoke(
         main,
         ["init", "--config-file", str(config_file), "--skip-test"],
-        input="overwrite\nhttps://new.example.com\nnew-secret\nDEBUG\n",
+        input="overwrite\nhttps://new.example.com\nnew-secret\n1\nDEBUG\n",
     )
 
     assert result.exit_code == 0
@@ -188,7 +189,7 @@ def test_setup_can_write_env_and_codex_config_without_echoing_secret(tmp_path, m
             "--with-codex",
             "--without-claude",
         ],
-        input="https://shop.example.com\nsecret-api-key-123\nINFO\n",
+        input="https://shop.example.com\nsecret-api-key-123\n1\nINFO\n",
     )
 
     assert result.exit_code == 0

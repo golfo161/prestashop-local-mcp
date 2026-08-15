@@ -238,6 +238,16 @@ Para una primera prueba de lectura, concede al menos:
 
 Para modificar datos, tendras que conceder tambien `POST`, `PUT`, `PATCH` o `DELETE` en los recursos correspondientes.
 
+Para crear productos con stock inicial e imagen, concede al menos:
+
+- `POST` en `products`.
+- `GET` y `PUT` en `stock_availables`.
+- `POST` en `images`.
+
+Si falta `PUT` en `stock_availables`, el producto se crea, pero PrestaShop no permite aplicar la cantidad inicial. El MCP devuelve ese error en `stock_update` para que no pase desapercibido.
+
+La regla de impuestos no se calcula por nombre: PrestaShop espera el ID de `id_tax_rules_group`. En la tienda de Ovillos el valor usado para la regla del 21% es `1`; si otra tienda usa otro ID, indicalo en el asistente o en `PRESTASHOP_TAX_RULES_GROUP_ID`.
+
 ## 5. Instalar el MCP local
 
 La forma recomendada para usuarios finales es usar el instalador asistido de Windows. No requiere Git, permite elegir la carpeta donde se instalara el MCP y crea un entorno virtual aislado con todas las dependencias.
@@ -268,8 +278,9 @@ El instalador preguntara:
 1. La carpeta donde quieres instalar el MCP.
 2. La URL de la tienda PrestaShop.
 3. La API key del Webservice con entrada oculta.
-4. Si quieres conectar Codex en ChatGPT Desktop.
-5. Si quieres conectar Claude Desktop.
+4. El ID de la regla de impuestos para nuevos productos. Por defecto `1`, que en Ovillos corresponde al 21%.
+5. Si quieres conectar Codex en ChatGPT Desktop.
+6. Si quieres conectar Claude Desktop.
 
 El codigo y el entorno virtual quedan en la carpeta elegida. Las credenciales se guardan fuera de esa carpeta, en el perfil seguro del usuario:
 
@@ -353,13 +364,14 @@ El asistente hace todo el despliegue local:
 
 1. Solicita la URL de la tienda PrestaShop.
 2. Solicita la API key con entrada oculta.
-3. Guarda las credenciales en `%APPDATA%\prestashop-local-mcp\.env`.
-4. Prueba la conexion con la API.
-5. Pregunta si quieres conectar Codex en ChatGPT Desktop.
-6. Si respondes que si, actualiza automaticamente `%USERPROFILE%\.codex\config.toml`.
-7. Pregunta si quieres conectar Claude Desktop.
-8. Si respondes que si, actualiza automaticamente `%APPDATA%\Claude\claude_desktop_config.json`.
-9. Crea copias de seguridad de los ficheros de cliente si ya existian.
+3. Solicita el ID de la regla de impuestos para nuevos productos.
+4. Guarda las credenciales y parametros locales en `%APPDATA%\prestashop-local-mcp\.env`.
+5. Prueba la conexion con la API.
+6. Pregunta si quieres conectar Codex en ChatGPT Desktop.
+7. Si respondes que si, actualiza automaticamente `%USERPROFILE%\.codex\config.toml`.
+8. Pregunta si quieres conectar Claude Desktop.
+9. Si respondes que si, actualiza automaticamente `%APPDATA%\Claude\claude_desktop_config.json`.
+10. Crea copias de seguridad de los ficheros de cliente si ya existian.
 
 El asistente no copia la API key en Codex ni Claude Desktop. La clave solo queda en el fichero local `.env` del usuario.
 
@@ -466,6 +478,7 @@ Contenido:
 ```env
 PRESTASHOP_SHOP_URL=https://tu-tienda.com
 PRESTASHOP_API_KEY=TU_API_KEY_DE_PRESTASHOP
+PRESTASHOP_TAX_RULES_GROUP_ID=1
 LOG_LEVEL=INFO
 ```
 
@@ -474,6 +487,7 @@ Ejemplo:
 ```env
 PRESTASHOP_SHOP_URL=https://ovillos.com
 PRESTASHOP_API_KEY=XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+PRESTASHOP_TAX_RULES_GROUP_ID=1
 LOG_LEVEL=INFO
 ```
 

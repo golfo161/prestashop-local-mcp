@@ -15,11 +15,13 @@ class TestConfig:
         with patch.dict(os.environ, {
             'PRESTASHOP_SHOP_URL': 'https://test-shop.example.com',
             'PRESTASHOP_API_KEY': 'test-api-key-123',
+            'PRESTASHOP_TAX_RULES_GROUP_ID': '7',
             'LOG_LEVEL': 'DEBUG'
         }):
             config = Config.from_env()
             assert config.shop_url == 'https://test-shop.example.com'
             assert config.api_key == 'test-api-key-123'
+            assert config.tax_rules_group_id == '7'
             assert config.log_level == 'DEBUG'
     
     def test_config_validation_missing_shop_url(self):
