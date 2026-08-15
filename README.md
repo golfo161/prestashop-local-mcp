@@ -246,7 +246,7 @@ Para crear productos con stock inicial e imagen, concede al menos:
 
 Si falta `PUT` en `stock_availables`, el producto se crea, pero PrestaShop no permite aplicar la cantidad inicial. El MCP devuelve ese error en `stock_update` para que no pase desapercibido.
 
-La regla de impuestos no se calcula por nombre: PrestaShop espera el ID interno de `id_tax_rules_group`. En el back office puede aparecer como `ES Standard rate (21%)`, pero el MCP necesita su ID numerico. En la tienda de Ovillos el ID de `ES Standard rate (21%)` es `1`; si otra tienda usa otro ID, indicalo en el asistente o en `PRESTASHOP_TAX_RULES_GROUP_ID`.
+La regla de impuestos no se calcula por nombre: PrestaShop espera el ID interno de `id_tax_rules_group`. En el back office puede aparecer como `ES Standard rate (21%)`, pero el MCP necesita su ID numerico. Ese ID depende de cada tienda: en una instalacion puede ser `15`, en otra `1` u otro valor. Indica siempre el ID real de tu tienda en el asistente o en `PRESTASHOP_TAX_RULES_GROUP_ID`.
 
 ## 5. Instalar el MCP local
 
@@ -278,7 +278,7 @@ El instalador preguntara:
 1. La carpeta donde quieres instalar el MCP.
 2. La URL de la tienda PrestaShop.
 3. La API key del Webservice con entrada oculta.
-4. El ID de la regla de impuestos para nuevos productos. Por defecto `1`, que en Ovillos corresponde a `ES Standard rate (21%)`.
+4. El ID numerico de la regla de impuestos para nuevos productos. Por ejemplo, `ES Standard rate (21%)` puede tener el ID `15` en tu tienda.
 5. Si quieres conectar Codex en ChatGPT Desktop.
 6. Si quieres conectar Claude Desktop.
 
