@@ -215,6 +215,23 @@ Estos programas deben existir en el ordenador donde ejecutes el MCP.
 
 No hace falta tener Git instalado para la instalacion recomendada.
 
+### Instalar Python en un Windows nuevo
+
+Si el equipo no tiene Python instalado, puedes instalar la ultima version disponible de Python 3 desde PowerShell con `winget`:
+
+```powershell
+winget install python3 --source winget --silent --accept-package-agreements --accept-source-agreements
+```
+
+Cierra y vuelve a abrir PowerShell. Despues comprueba que Python y `pip` estan disponibles:
+
+```powershell
+py --version
+py -m pip --version
+```
+
+No hace falta instalar Git ni GitHub Desktop. El instalador del MCP descarga el proyecto desde el ZIP generado por GitHub.
+
 ## 4. Preparar PrestaShop
 
 Antes de instalar el MCP, activa la API en tu tienda.
