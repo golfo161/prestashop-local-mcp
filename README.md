@@ -28,6 +28,8 @@ Recomendacion: empieza siempre con herramientas de lectura antes de usar accione
 
 Cuando trabajes con la tienda desde un asistente, las respuestas deben ser operativas y breves: validar datos, pedir confirmacion si hace falta, ejecutar la accion y devolver solo el resultado necesario.
 
+Para crear productos, el asistente debe mostrar siempre una previsualizacion antes de llamar a `create_product`. Si el usuario confirma la previsualizacion, crea el producto. Si no la confirma, pide los cambios necesarios o espera una nueva ficha.
+
 ## 2. Funcionalidades disponibles
 
 Estas son las operaciones que expone actualmente el MCP.
@@ -41,7 +43,7 @@ Estas son las operaciones que expone actualmente el MCP.
 
 - `get_products`: consulta productos por ID o lista productos con filtros.
 - `get_products_by_category`: lista productos asociados a una categoria por ID o nombre, incluyendo categorias secundarias.
-- `create_product`: crea un producto nuevo desactivado inicialmente. Tambien puede subir imagen, resumen y campos SEO.
+- `create_product`: crea un producto nuevo desactivado inicialmente. Antes de usarla, el asistente debe mostrar una previsualizacion y esperar confirmacion explicita. Tambien puede subir imagen, resumen y campos SEO.
 - `update_product`: actualiza un producto existente.
 - `delete_product`: elimina un producto.
 - `update_product_stock`: cambia la cantidad de stock de un producto.
@@ -134,7 +136,7 @@ producto:
 Antes de crear el producto, pide al asistente:
 
 ```text
-Revisa esta plantilla de producto. Si falta algun dato importante, preguntame antes de crearlo. Si esta correcta, crea el producto en PrestaShop usando create_product.
+Revisa esta plantilla de producto. Muestrame una previsualizacion con los datos finales, el resumen y el SEO. Si falta algun dato importante, preguntame antes de crearlo. No lo crees hasta que confirme la previsualizacion.
 ```
 
 Idiomas:
@@ -183,9 +185,11 @@ Flujo recomendado:
 2. Comprueba que la imagen existe en esa ruta local si vas a subir imagen.
 3. Pide al asistente que valide la ficha antes de crearla.
 4. El asistente adapta el resumen con el formato mas claro para el cliente. Cuando use puntos o bloques, debe enviarlo como HTML basico seguro, no como saltos de linea planos.
-5. El asistente llama a `create_product`.
-6. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
-7. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
+5. El asistente muestra una previsualizacion operativa con nombre, precio, categoria, stock, referencia, peso, imagen, resumen y SEO.
+6. El usuario confirma si esta de acuerdo.
+7. Si confirma, el asistente llama a `create_product`. Si no confirma, el asistente pide los cambios o espera una nueva ficha.
+8. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
+9. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.
 
 ### Categorias
 

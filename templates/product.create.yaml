@@ -1,5 +1,6 @@
 # Plantilla para crear un producto con create_product.
 # Sustituye los valores de ejemplo antes de pedir al asistente que cree el producto.
+# El asistente debe mostrar una previsualizacion y esperar confirmacion antes de crearlo.
 producto:
   nombre:
     es: "Nombre del producto"

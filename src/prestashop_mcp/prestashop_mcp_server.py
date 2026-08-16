@@ -123,7 +123,13 @@ async def handle_list_tools():
         ),
         Tool(
             name="create_product",
-            description="Create a new product",
+            description=(
+                "Create a new product. Before calling this tool, the assistant must show "
+                "the user a concise preview of the final product data, including the rendered "
+                "summary content, SEO fields, category, stock, reference, weight and image path, "
+                "then wait for explicit user confirmation. If the user does not approve the "
+                "preview, ask for corrected data instead of creating the product."
+            ),
             inputSchema={
                 "type": "object",
                 "properties": {
