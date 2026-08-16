@@ -126,7 +126,7 @@ async def handle_list_tools():
             description=(
                 "Create a new product. Before calling this tool, the assistant must show "
                 "the user a concise preview of the final product data, including the rendered "
-                "summary content, SEO fields, category, stock, reference, weight and image path, "
+                "summary content, SEO fields, features, category, stock, reference, weight and image path, "
                 "then wait for explicit user confirmation. If the user does not approve the "
                 "preview, ask for corrected data instead of creating the product."
             ),
@@ -228,6 +228,26 @@ async def handle_list_tools():
                     "quantity": {"type": "integer", "description": "Initial stock quantity"},
                     "reference": {"type": "string", "description": "Product reference/SKU"},
                     "weight": {"type": "number", "description": "Product weight"},
+                    "features": {
+                        "type": "array",
+                        "description": "Optional product features. Each item can use existing IDs with feature_id/id_feature and feature_value_id/id_feature_value, or names with name/nombre/feature and value/valor/feature_value. When names are used, the MCP finds or creates the feature and feature value before linking them to the product.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "feature_id": {"type": "string", "description": "Existing PrestaShop feature ID"},
+                                "id_feature": {"type": "string", "description": "Existing PrestaShop feature ID"},
+                                "feature_value_id": {"type": "string", "description": "Existing PrestaShop feature value ID"},
+                                "id_feature_value": {"type": "string", "description": "Existing PrestaShop feature value ID"},
+                                "name": {"type": "string", "description": "Feature name, for example Composicion"},
+                                "nombre": {"type": "string", "description": "Feature name, for example Composicion"},
+                                "feature": {"type": "string", "description": "Feature name, for example Composicion"},
+                                "value": {"type": "string", "description": "Feature value, for example 100% Poliamida"},
+                                "valor": {"type": "string", "description": "Feature value, for example 100% Poliamida"},
+                                "feature_value": {"type": "string", "description": "Feature value, for example 100% Poliamida"}
+                            },
+                            "additionalProperties": False
+                        }
+                    },
                     "image_path": {"type": "string", "description": "Optional local absolute path to the product image"}
                 },
                 "required": ["name", "price"],
@@ -640,7 +660,8 @@ async def handle_call_tool(name: str, arguments: dict):
                     quantity=arguments.get('quantity'),
                     reference=arguments.get('reference'),
                     weight=arguments.get('weight'),
-                    image_path=arguments.get('image_path')
+                    image_path=arguments.get('image_path'),
+                    features=arguments.get('features')
                 )
             
             elif name == "update_product":

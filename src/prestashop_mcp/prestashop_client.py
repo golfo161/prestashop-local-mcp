@@ -286,9 +286,13 @@ class PrestaShopClient:
         link_rewrite = re.sub(r'-+', '-', link_rewrite).strip("-")
         return link_rewrite or "product"
 
-    def _build_product_category_associations(self, category_id: str) -> Dict[str, Any]:
-        """Build product category associations required for catalog visibility."""
-        return {
+    def _build_product_category_associations(
+        self,
+        category_id: str,
+        feature_links: Optional[List[Dict[str, str]]] = None
+    ) -> Dict[str, Any]:
+        """Build product associations required for catalog visibility and features."""
+        associations = {
             "categories": [
                 {
                     "category": {
@@ -297,6 +301,17 @@ class PrestaShopClient:
                 }
             ]
         }
+        if feature_links:
+            associations["product_features"] = [
+                {
+                    "product_feature": {
+                        "id": str(feature["id_feature"]),
+                        "id_feature_value": str(feature["id_feature_value"])
+                    }
+                }
+                for feature in feature_links
+            ]
+        return associations
 
     def _get_response_items(self, response: Dict[str, Any], singular: str, plural: str) -> List[Dict[str, Any]]:
         """Normalize PrestaShop JSON responses that may use singular or plural roots."""
@@ -330,6 +345,114 @@ class PrestaShopClient:
             char for char in normalized if unicodedata.category(char) != "Mn"
         )
         return without_accents.strip().lower()
+
+    async def _find_by_localized_field(
+        self,
+        endpoint: str,
+        singular: str,
+        plural: str,
+        field_name: str,
+        expected_value: str,
+        extra_match: Optional[Dict[str, str]] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Find a PrestaShop resource by a localized field value."""
+        response = await self._make_request(
+            'GET',
+            endpoint,
+            params={'display': 'full', 'limit': 1000}
+        )
+        expected = self._normalize_search_text(expected_value)
+        for item in self._get_response_items(response, singular, plural):
+            if extra_match and any(str(item.get(key)) != str(value) for key, value in extra_match.items()):
+                continue
+            if self._normalize_search_text(self._get_localized_value(item.get(field_name))) == expected:
+                return item
+        return None
+
+    async def _get_or_create_feature(self, name: Any) -> str:
+        """Return a feature ID, creating the feature when it does not exist."""
+        feature_name = self._get_translation(name, self.available_languages[0])
+        existing = await self._find_by_localized_field(
+            'product_features',
+            'product_feature',
+            'product_features',
+            'name',
+            feature_name
+        )
+        if existing and existing.get('id'):
+            return str(existing['id'])
+
+        response = await self._make_request(
+            'POST',
+            'product_features',
+            data={'product_feature': {'name': self._build_multilingual_field(name)}}
+        )
+        feature = response.get('product_feature', {})
+        if not feature.get('id'):
+            raise PrestaShopAPIError(f"Feature creation failed for {feature_name}")
+        return str(feature['id'])
+
+    async def _get_or_create_feature_value(self, feature_id: str, value: Any) -> str:
+        """Return a feature value ID, creating the value when it does not exist."""
+        feature_value = self._get_translation(value, self.available_languages[0])
+        existing = await self._find_by_localized_field(
+            'product_feature_values',
+            'product_feature_value',
+            'product_feature_values',
+            'value',
+            feature_value,
+            extra_match={'id_feature': str(feature_id)}
+        )
+        if existing and existing.get('id'):
+            return str(existing['id'])
+
+        response = await self._make_request(
+            'POST',
+            'product_feature_values',
+            data={
+                'product_feature_value': {
+                    'id_feature': str(feature_id),
+                    'custom': '0',
+                    'value': self._build_multilingual_field(value)
+                }
+            }
+        )
+        product_feature_value = response.get('product_feature_value', {})
+        if not product_feature_value.get('id'):
+            raise PrestaShopAPIError(f"Feature value creation failed for {feature_value}")
+        return str(product_feature_value['id'])
+
+    async def _resolve_product_feature_links(
+        self,
+        features: Optional[List[Dict[str, Any]]]
+    ) -> List[Dict[str, str]]:
+        """Resolve product feature definitions into PrestaShop feature/value IDs."""
+        if not features:
+            return []
+
+        links = []
+        for feature in features:
+            feature_id = feature.get('feature_id') or feature.get('id_feature')
+            feature_value_id = feature.get('feature_value_id') or feature.get('id_feature_value')
+
+            if not feature_id:
+                feature_name = feature.get('name') or feature.get('nombre') or feature.get('feature')
+                if not feature_name:
+                    raise PrestaShopAPIError("Each feature needs feature_id/id_feature or name/nombre/feature")
+                feature_id = await self._get_or_create_feature(feature_name)
+
+            if not feature_value_id:
+                value = feature.get('value') or feature.get('valor') or feature.get('feature_value')
+                if value is None:
+                    raise PrestaShopAPIError("Each feature needs feature_value_id/id_feature_value or value/valor/feature_value")
+                feature_value_id = await self._get_or_create_feature_value(str(feature_id), value)
+
+            links.append({
+                'id_feature': str(feature_id),
+                'id_feature_value': str(feature_value_id)
+            })
+
+        return links
 
     def _summarize_product(self, product: Dict[str, Any]) -> Dict[str, Any]:
         """Return the fields most useful for category listings."""
@@ -643,12 +766,14 @@ class PrestaShopClient:
         quantity: Optional[int] = None,
         reference: Optional[str] = None,
         weight: Optional[float] = None,
-        image_path: Optional[str] = None
+        image_path: Optional[str] = None,
+        features: Optional[List[Dict[str, Any]]] = None
     ) -> Dict[str, Any]:
         """Create a new product in PrestaShop with ALL required fields for backend visibility."""
         summary_value = summary if summary is not None else (description if description is not None else "")
 
         default_category_id = str(category_id) if category_id else "2"
+        feature_links = await self._resolve_product_feature_links(features)
 
         # CRITICAL FIX: Complete product initialization with all required fields
         product_data = {
@@ -724,7 +849,7 @@ class PrestaShopClient:
                 "is_customizable": "0",
                 "uploadable_files": "0",
                 "text_fields": "0",
-                "associations": self._build_product_category_associations(default_category_id)
+                "associations": self._build_product_category_associations(default_category_id, feature_links)
             }
         }
         
@@ -749,6 +874,9 @@ class PrestaShopClient:
             except Exception as e:
                 logging.warning(f"Product created but image upload failed: {e}")
                 result['image_upload'] = {"error": str(e)}
+
+        if feature_links:
+            result['feature_links'] = feature_links
         
         return result
     

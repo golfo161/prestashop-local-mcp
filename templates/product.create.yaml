@@ -49,4 +49,11 @@ producto:
   cantidad: 0
   referencia: "REFERENCIA-SKU"
   peso: 0.00
+  caracteristicas:
+    - nombre: "Composicion"
+      valor: "100% Poliamida"
+    - nombre: "Formato"
+      valor: "Cono 250 g"
+    - nombre: "Origen"
+      valor: "Italia"
   imagen: "C:\\ruta\\absoluta\\a\\imagen.jpg"

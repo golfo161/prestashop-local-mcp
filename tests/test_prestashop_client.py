@@ -183,6 +183,66 @@ async def test_create_product_associates_default_category_for_catalog_visibility
 
 
 @pytest.mark.asyncio
+async def test_create_product_associates_existing_feature_ids():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    result = await client.create_product(
+        name="Featured product",
+        price=12.5,
+        category_id="210",
+        features=[
+            {"feature_id": "3", "feature_value_id": "9"},
+            {"id_feature": "4", "id_feature_value": "10"},
+        ],
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["associations"]["product_features"] == [
+        {"product_feature": {"id": "3", "id_feature_value": "9"}},
+        {"product_feature": {"id": "4", "id_feature_value": "10"}},
+    ]
+    assert result["feature_links"] == [
+        {"id_feature": "3", "id_feature_value": "9"},
+        {"id_feature": "4", "id_feature_value": "10"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_create_product_creates_missing_feature_and_value_by_name():
+    client = SequenceClient([
+        {"product_features": []},
+        {"product_feature": {"id": "3"}},
+        {"product_feature_values": []},
+        {"product_feature_value": {"id": "9"}},
+        {"product": {"id": "10"}},
+    ])
+
+    await client.create_product(
+        name="Featured product",
+        price=12.5,
+        category_id="210",
+        features=[{"nombre": "Composicion", "valor": "100% Poliamida"}],
+    )
+
+    assert client.requests[0]["method"] == "GET"
+    assert client.requests[0]["endpoint"] == "product_features"
+    assert client.requests[1]["method"] == "POST"
+    assert client.requests[1]["endpoint"] == "product_features"
+    assert client.requests[1]["data"]["product_feature"]["name"][0]["value"] == "Composicion"
+    assert client.requests[2]["method"] == "GET"
+    assert client.requests[2]["endpoint"] == "product_feature_values"
+    assert client.requests[3]["method"] == "POST"
+    assert client.requests[3]["endpoint"] == "product_feature_values"
+    assert client.requests[3]["data"]["product_feature_value"]["id_feature"] == "3"
+    assert client.requests[3]["data"]["product_feature_value"]["value"][0]["value"] == "100% Poliamida"
+
+    product = client.requests[4]["data"]["product"]
+    assert product["associations"]["product_features"] == [
+        {"product_feature": {"id": "3", "id_feature_value": "9"}},
+    ]
+
+
+@pytest.mark.asyncio
 async def test_create_product_uses_configured_tax_rules_group():
     client = SequenceClient([{"product": {"id": "10"}}])
     client.config.tax_rules_group_id = "7"
