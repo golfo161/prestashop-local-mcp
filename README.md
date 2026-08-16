@@ -51,7 +51,7 @@ Campos habituales que puedes consultar o modificar segun la herramienta:
 
 - nombre
 - precio
-- resumen: se guarda en el campo resumen de PrestaShop, hasta 1500 caracteres
+- resumen: se guarda en el campo resumen de PrestaShop, hasta 1500 caracteres. Puede usar parrafos cortos, secciones o puntos si mejora la lectura.
 - SEO: meta title, meta description, keywords y URL amigable
 - categoria
 - referencia/SKU
@@ -73,7 +73,7 @@ Campos de la plantilla:
 
 - `nombre`: obligatorio. Nombre visible del producto. Puede ser texto simple o un bloque por idioma.
 - `precio`: obligatorio. Precio de venta.
-- `resumen`: opcional, pero recomendable. Es el texto del producto y se guarda en el campo resumen de PrestaShop. Longitud maxima recomendada: 1500 caracteres.
+- `resumen`: opcional, pero recomendable. Es el texto del producto y se guarda en el campo resumen de PrestaShop. Longitud maxima recomendada: 1500 caracteres. Puede redactarse en parrafos, bloques o puntos segun lo que sea mas claro para el cliente.
 - `seo`: opcional. Permite aportar `meta_title`, `meta_description`, `meta_keywords` o `link_rewrite`. Si no se indica, el asistente lo genera siguiendo buenas practicas SEO.
 - `categoria_id`: opcional. Si no se indica, PrestaShop usara la categoria por defecto configurada por el MCP.
 - `cantidad`: opcional. Stock inicial.
@@ -91,9 +91,27 @@ producto:
     fr: "Laine merinos bleue 100g"
   precio: 5.95
   resumen:
-    es: "Ovillo de lana merino suave, ideal para prendas de invierno."
-    en: "Soft merino wool ball, ideal for winter garments."
-    fr: "Pelote de laine merinos douce, ideale pour les vetements d'hiver."
+    es: |
+      Ovillo de lana merino suave, ideal para prendas de invierno.
+
+      Caracteristicas:
+      - Formato 100 g.
+      - Tacto suave y calido.
+      - Apto para punto y crochet.
+    en: |
+      Soft merino wool ball, ideal for winter garments.
+
+      Features:
+      - 100 g format.
+      - Soft and warm feel.
+      - Suitable for knitting and crochet.
+    fr: |
+      Pelote de laine merinos douce, ideale pour les vetements d'hiver.
+
+      Caracteristiques:
+      - Format 100 g.
+      - Toucher doux et chaud.
+      - Convient au tricot et au crochet.
   seo:
     meta_title:
       es: "Lana Merino Azul 100g"
@@ -161,7 +179,7 @@ Flujo recomendado:
 1. Copia la plantilla y rellena los datos del producto.
 2. Comprueba que la imagen existe en esa ruta local si vas a subir imagen.
 3. Pide al asistente que valide la ficha antes de crearla.
-4. El asistente adapta el resumen y completa SEO si faltan datos.
+4. El asistente adapta el resumen con el formato mas claro para el cliente y completa SEO si faltan datos.
 5. El asistente llama a `create_product`.
 6. El MCP crea el producto desactivado y, si se indico `image_path`, sube la imagen al producto creado.
 7. Revisa el ID del producto y el resultado de `image_upload` en la respuesta.

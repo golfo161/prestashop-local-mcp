@@ -394,6 +394,22 @@ async def test_create_product_limits_summary_to_1500_characters():
 
 
 @pytest.mark.asyncio
+async def test_create_product_preserves_structured_summary_format():
+    client = SequenceClient([{"product": {"id": "10"}}])
+    summary = "Resumen visual.\n\nCaracteristicas:\n- Punto clave 1.\n- Punto clave 2."
+
+    await client.create_product(
+        name="Structured summary product",
+        price=12.5,
+        summary=summary,
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["description_short"][0]["value"] == summary
+
+
+@pytest.mark.asyncio
 async def test_update_product_stock_updates_existing_stock_record():
     client = SequenceClient([
         {"stock_availables": [{"id": "99"}]},

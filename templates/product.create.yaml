@@ -7,9 +7,27 @@ producto:
     fr: "Nom du produit"
   precio: 0.00
   resumen:
-    es: "Resumen breve del producto."
-    en: "Short product summary."
-    fr: "Resume bref du produit."
+    es: |
+      Resumen breve del producto.
+
+      Caracteristicas:
+      - Punto clave 1.
+      - Punto clave 2.
+      - Punto clave 3.
+    en: |
+      Short product summary.
+
+      Features:
+      - Key point 1.
+      - Key point 2.
+      - Key point 3.
+    fr: |
+      Resume bref du produit.
+
+      Caracteristiques:
+      - Point cle 1.
+      - Point cle 2.
+      - Point cle 3.
   seo:
     meta_title:
       es: "Titulo SEO del producto"

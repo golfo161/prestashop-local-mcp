@@ -156,7 +156,7 @@ async def handle_list_tools():
                                 "additionalProperties": False
                             }
                         ],
-                        "description": "Product summary/short description. Use the user's product text here. The MCP stores it in PrestaShop summary and limits it to 1500 characters."
+                        "description": "Product summary/short description. Use the user's product text here. The MCP stores it in PrestaShop summary and limits it to 1500 characters. Format it for readability when useful: short paragraphs, sections, or bullet points are allowed."
                     },
                     "meta_title": {
                         "oneOf": [
