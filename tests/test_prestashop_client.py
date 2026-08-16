@@ -349,6 +349,31 @@ async def test_create_product_generates_basic_seo_when_only_summary_is_provided(
 
 
 @pytest.mark.asyncio
+async def test_create_product_generates_clean_seo_from_html_summary():
+    client = SequenceClient([{"product": {"id": "10"}}])
+
+    summary = (
+        "<p>Hilo fantasia suave para labores.</p>"
+        "<p><strong>Caracteristicas:</strong></p>"
+        "<ul><li>Textura tipo peluche.</li><li>Fabricado en Italia.</li></ul>"
+    )
+
+    await client.create_product(
+        name={"es": "Hilo Peluche Italiano"},
+        price=9.95,
+        summary={"es": summary},
+        category_id="2",
+    )
+
+    product = client.requests[0]["data"]["product"]
+    assert product["description_short"][0]["value"] == summary
+    assert "<" not in product["meta_description"][0]["value"]
+    assert "Hilo fantasia suave para labores" in product["meta_description"][0]["value"]
+    assert "strong" not in product["meta_keywords"][0]["value"]
+    assert "peluche" in product["meta_keywords"][0]["value"]
+
+
+@pytest.mark.asyncio
 async def test_create_product_fills_missing_translations_from_spanish():
     client = SequenceClient([{"product": {"id": "10"}}])
 
@@ -394,12 +419,16 @@ async def test_create_product_limits_summary_to_1500_characters():
 
 
 @pytest.mark.asyncio
-async def test_create_product_preserves_structured_summary_format():
+async def test_create_product_preserves_html_summary_format():
     client = SequenceClient([{"product": {"id": "10"}}])
-    summary = "Resumen visual.\n\nCaracteristicas:\n- Punto clave 1.\n- Punto clave 2."
+    summary = (
+        "<p>Resumen visual.</p>"
+        "<p><strong>Caracteristicas:</strong></p>"
+        "<ul><li>Punto clave 1.</li><li>Punto clave 2.</li></ul>"
+    )
 
     await client.create_product(
-        name="Structured summary product",
+        name="HTML summary product",
         price=12.5,
         summary=summary,
         category_id="2",

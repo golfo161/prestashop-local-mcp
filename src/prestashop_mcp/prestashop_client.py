@@ -1,6 +1,7 @@
 """Async PrestaShop Webservice client used by the MCP server."""
 
 import asyncio
+import html
 import json
 import logging
 import re
@@ -168,6 +169,14 @@ class PrestaShopClient:
         truncated = value[:max_length].rsplit(" ", 1)[0].strip()
         return truncated or value[:max_length].strip()
 
+    def _html_to_plain_text(self, value: str) -> str:
+        """Convert simple product-summary HTML into plain text for SEO fields."""
+        text = re.sub(r"(?i)<\s*br\s*/?\s*>", " ", str(value or ""))
+        text = re.sub(r"(?i)</\s*(p|li|div|h[1-6])\s*>", ". ", text)
+        text = re.sub(r"<[^>]+>", " ", text)
+        text = html.unescape(text)
+        return re.sub(r"\s+", " ", text).strip(" .")
+
     def _generate_meta_title(self, name: Any, language: Dict[str, Any]) -> str:
         """Generate a concise SEO title from the localized product name."""
         product_name = self._get_translation(name, language)
@@ -175,7 +184,7 @@ class PrestaShopClient:
 
     def _generate_meta_description(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
         """Generate a natural SEO description from summary or name."""
-        summary_text = self._get_translation(summary, language)
+        summary_text = self._html_to_plain_text(self._get_translation(summary, language))
         if summary_text:
             return self._truncate_text(summary_text, 160)
         product_name = self._get_translation(name, language)
@@ -183,7 +192,10 @@ class PrestaShopClient:
 
     def _generate_meta_keywords(self, name: Any, summary: Any, language: Dict[str, Any]) -> str:
         """Generate a small keyword list without keyword stuffing."""
-        text = f"{self._get_translation(name, language)} {self._get_translation(summary, language)}"
+        text = (
+            f"{self._get_translation(name, language)} "
+            f"{self._html_to_plain_text(self._get_translation(summary, language))}"
+        )
         words = [
             word.lower()
             for word in re.findall(r"[A-Za-zÀ-ÿ0-9]{3,}", text)
