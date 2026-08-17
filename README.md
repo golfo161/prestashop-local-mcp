@@ -724,38 +724,7 @@ Get general shop information.
 Use prestashop:get_products_by_category for category AGOTADOS and return 10 products.
 ```
 
-## 7. Instalacion manual alternativa con Git
-
-Usa esta opcion solo si tienes Git instalado y disponible en el PATH.
-
-```powershell
-py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
-```
-
-## 8. Instalacion para desarrollo
-
-Usa estos pasos si quieres modificar el codigo fuente.
-
-```powershell
-cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
-git clone https://github.com/golfo161/prestashop-local-mcp.git PRESTASHOP-LOCAL-MCP
-cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
-py -m venv venv_prestashop
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\venv_prestashop\Scripts\Activate.ps1
-py -m pip install --upgrade pip
-pip install -e ".[dev]"
-```
-
-Si PowerShell no permite activar el entorno virtual, puedes ejecutar el modulo con el Python del entorno virtual sin activar nada.
-
-Comprueba que el paquete carga:
-
-```powershell
-py -c "import prestashop_mcp; print('Installation successful')"
-```
-
-## 9. Buscar productos por categoria real
+## 7. Buscar productos por categoria real
 
 PrestaShop permite que un producto este asociado a varias categorias. La herramienta `get_products` filtra por `id_category_default`, por lo que puede no encontrar productos que pertenecen a una categoria secundaria.
 
@@ -801,17 +770,19 @@ La respuesta incluye:
 
 Nota: esta herramienta es de solo lectura.
 
-## 10. ChatGPT Apps y MCP remoto
+## 8. ChatGPT Apps y MCP remoto
 
-ChatGPT Apps no se conecta directamente a servidores MCP locales `stdio`. Para usar este MCP como app de ChatGPT fuera de Codex, debes exponerlo como servidor MCP remoto o usar Secure MCP Tunnel.
+Este MCP esta pensado para ejecutarse en tu ordenador. Codex y Claude Desktop pueden arrancarlo directamente porque leen un fichero de configuracion local y ejecutan Python en tu equipo.
+
+ChatGPT Apps funciona de otra manera: no arranca directamente programas locales de Windows mediante `stdio`. Por eso, si algun dia quieres usar este MCP como una app de ChatGPT fuera de Codex Desktop, el MCP tendria que estar disponible como servidor remoto o mediante Secure MCP Tunnel.
 
 Resumen:
 
 - Codex en ChatGPT Desktop: usa `C:\Users\TU_USUARIO\.codex\config.toml`.
 - Claude Desktop: usa `C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json`.
-- ChatGPT Apps: requiere MCP remoto o Secure MCP Tunnel.
+- ChatGPT Apps: no usa esos ficheros locales; necesita MCP remoto o Secure MCP Tunnel.
 
-## 11. Actualizaciones y reconexion
+## 9. Actualizaciones y reconexion
 
 Si modificas ficheros del modulo, reinicia el cliente para que vuelva a cargar el servidor MCP.
 
@@ -827,7 +798,7 @@ En Codex o Claude Desktop, lo normal es cerrar y volver a abrir el cliente o ini
 
 En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automaticamente. Hay que refrescar o escanear herramientas otra vez. Si la app ya esta publicada en un workspace, un administrador debe revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app.
 
-## 12. Comandos utiles
+## 10. Comandos utiles
 
 En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. El comando `prestashop-local-mcp ...` solo funciona si la carpeta `Scripts` de Python esta en el `PATH`.
 
@@ -980,7 +951,7 @@ Ejecutar tests seguros:
 .\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py tests\test_cli.py tests\test_windows_installer.py
 ```
 
-## 13. Seguridad
+## 11. Seguridad
 
 - No subas `.env` a Git.
 - Usa una clave de Webservice con los permisos minimos necesarios.
@@ -988,7 +959,7 @@ Ejecutar tests seguros:
 - Revisa las acciones de escritura antes de aprobarlas desde el cliente.
 - Haz copia de seguridad de la tienda antes de probar acciones masivas.
 
-## 14. Referencias y creditos
+## 12. Referencias y creditos
 
 - Repositorio del proyecto: https://github.com/golfo161/prestashop-local-mcp
 - Basado originalmente en: https://github.com/latinogino/prestashop-mcp
