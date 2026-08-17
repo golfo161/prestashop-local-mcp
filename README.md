@@ -339,11 +339,7 @@ Si falta `PUT` en `stock_availables`, el producto se crea, pero PrestaShop no pe
 
 La regla de impuestos no se calcula por nombre: PrestaShop espera el ID interno de `id_tax_rules_group`. En el back office puede aparecer como `ES Standard rate (21%)`, pero el MCP necesita su ID numerico. Ese ID depende de cada tienda: en una instalacion puede ser `15`, en otra `1` u otro valor. Indica siempre el ID real de tu tienda en el asistente o en `PRESTASHOP_TAX_RULES_GROUP_ID`.
 
-## 5. Instalar el MCP local
-
-Hay dos formas de instalar este MCP. Para usuarios finales, usa la instalacion asistida. La instalacion manual queda para usuarios que prefieren controlar los comandos o integrar el paquete en un entorno Python existente.
-
-### Opcion A: instalacion asistida de Windows (recomendada)
+## 5. Instalacion asistida de Windows (recomendada)
 
 Esta es la opcion recomendada. No requiere Git, permite elegir la carpeta de instalacion, crea un entorno virtual aislado y puede conectar automaticamente el MCP con Codex en ChatGPT Desktop o Claude Desktop.
 
@@ -433,7 +429,7 @@ Si necesitas repetir la configuracion despues de instalar, ejecuta desde la carp
 .\setup-mcp.bat
 ```
 
-### Opcion B: instalacion manual con pip
+## 6. Instalacion manual con pip
 
 Usa esta opcion si no quieres usar el instalador asistido o si prefieres instalar el paquete directamente en un Python ya existente. Tampoco requiere Git si instalas desde el ZIP de GitHub.
 
@@ -487,48 +483,9 @@ py -m prestashop_mcp.cli install-codex
 py -m prestashop_mcp.cli install-claude
 ```
 
-### Instalacion manual alternativa con Git
+### 6.1 Crear el fichero de configuracion `.env`
 
-Usa esta opcion solo si tienes Git instalado y disponible en el PATH.
-
-```powershell
-py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
-```
-
-### Instalacion para desarrollo
-
-Usa estos pasos si quieres modificar el codigo fuente.
-
-```powershell
-cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
-git clone https://github.com/golfo161/prestashop-local-mcp.git PRESTASHOP-LOCAL-MCP
-cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
-py -m venv venv_prestashop
-Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
-.\venv_prestashop\Scripts\Activate.ps1
-py -m pip install --upgrade pip
-pip install -e ".[dev]"
-```
-
-Si PowerShell no permite activar el entorno virtual, puedes ejecutar el modulo con el Python del entorno virtual sin activar nada.
-
-Comprueba que el paquete carga:
-
-```powershell
-py -c "import prestashop_mcp; print('Installation successful')"
-```
-
-## 6. Crear el fichero de configuracion `.env`
-
-La forma recomendada es usar el asistente completo. Pregunta la URL de la tienda, la clave del Webservice, crea el fichero local de configuracion y puede conectar el MCP con Codex o Claude Desktop sin copiar rutas manualmente.
-
-Si usaste el instalador asistido:
-
-```powershell
-.\setup-mcp.bat
-```
-
-Si hiciste una instalacion manual con `pip`:
+En la instalacion manual, ejecuta el asistente de configuracion despues de instalar el paquete. Pregunta la URL de la tienda, la clave del Webservice, crea el fichero local de configuracion y puede conectar el MCP con Codex o Claude Desktop sin copiar rutas manualmente.
 
 ```powershell
 py -m prestashop_mcp.cli setup
@@ -552,21 +509,13 @@ Si el fichero `.env` ya existe, el asistente pregunta que quieres hacer antes de
 
 Si solo quieres crear el `.env` y no conectar ningun cliente todavia:
 
-Instalacion asistida, desde la carpeta elegida:
-
-```powershell
-.\venv\Scripts\python.exe -m prestashop_mcp.cli init
-```
-
-Instalacion manual con `pip`:
-
 ```powershell
 py -m prestashop_mcp.cli init
 ```
 
-Si usas `setup-mcp.bat`, el asistente tambien puede reinstalar la conexion con Codex o Claude Desktop.
+Si necesitas reinstalar la conexion con Codex o Claude Desktop mas adelante, usa `install-codex` o `install-claude`.
 
-### Configuracion manual
+#### Configuracion manual
 
 Tambien puedes crear el fichero manualmente. El fichero `.env` guarda la URL de la tienda y la clave del Webservice. No se debe subir a Git.
 
@@ -594,17 +543,9 @@ PRESTASHOP_TAX_RULES_GROUP_ID=1
 LOG_LEVEL=INFO
 ```
 
-## 7. Probar la API directamente
+### 6.2 Probar la API directamente
 
 Esta prueba confirma que PrestaShop acepta la clave antes de arrancar el MCP.
-
-Con instalacion asistida, desde la carpeta elegida:
-
-```powershell
-.\venv\Scripts\python.exe -m prestashop_mcp.cli doctor
-```
-
-Con instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli doctor
@@ -626,17 +567,9 @@ StatusCode : 200
 
 Si recibes `401 Unauthorized`, revisa que el Webservice este activo, que la clave sea correcta y que tenga permisos `GET` en `configurations`.
 
-## 8. Ejecutar el MCP local por primera vez
+### 6.3 Ejecutar el MCP local por primera vez
 
 Esta prueba arranca el servidor MCP manualmente. Sirve para comprobar que el modulo funciona antes de conectarlo a un cliente.
-
-Si usaste el instalador asistido, abre la carpeta elegida y ejecuta:
-
-```powershell
-.\start-mcp.bat
-```
-
-Si hiciste una instalacion manual con `pip`:
 
 ```powershell
 py -m prestashop_mcp.cli --log-level DEBUG
@@ -664,7 +597,7 @@ Para detenerlo, pulsa `Ctrl+C`.
 
 Nota: si usas Codex o Claude Desktop, normalmente no tienes que dejar este comando abierto. El cliente arrancara el MCP automaticamente cuando lea su fichero de configuracion.
 
-## 9. Configurar ChatGPT Desktop con Codex
+### 6.4 Configurar ChatGPT Desktop con Codex
 
 Esta opcion es para usar el MCP desde Codex en ChatGPT Desktop. Codex lee sus servidores MCP desde `config.toml`.
 
@@ -686,11 +619,11 @@ Edita o crea este fichero:
 C:\Users\TU_USUARIO\.codex\config.toml
 ```
 
-Si usaste el instalador asistido, el bloque tendra una forma parecida a esta. Cambia `TU_USUARIO` y `CARPETA_ELEGIDA` por tus rutas reales:
+Si generas el bloque manualmente, tendra una forma parecida a esta. Cambia `RUTA_A_PYTHON` por el Python que ejecuta el paquete:
 
 ```toml
 [mcp_servers.prestashop]
-command = 'C:\Users\TU_USUARIO\CARPETA_ELEGIDA\venv\Scripts\python.exe'
+command = 'RUTA_A_PYTHON'
 args = ['-m', 'prestashop_mcp.prestashop_mcp_server']
 cwd = 'C:\Users\TU_USUARIO\AppData\Roaming\prestashop-local-mcp'
 startup_timeout_sec = 30
@@ -728,7 +661,7 @@ Dame informacion general de la tienda.
 Lista los 10 primeros productos de la categoria AGOTADOS usando get_products_by_category.
 ```
 
-## 10. Configurar Claude Desktop
+### 6.5 Configurar Claude Desktop
 
 Esta opcion es para usar el MCP desde Claude Desktop. Claude lee sus servidores MCP desde `claude_desktop_config.json`.
 
@@ -750,13 +683,13 @@ Edita o crea este fichero:
 C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json
 ```
 
-Copia este contenido, adaptando `TU_USUARIO` y `CARPETA_ELEGIDA`:
+Copia este contenido, adaptando `TU_USUARIO` y `RUTA_A_PYTHON`:
 
 ```json
 {
   "mcpServers": {
     "prestashop": {
-      "command": "C:\\Users\\TU_USUARIO\\CARPETA_ELEGIDA\\venv\\Scripts\\python.exe",
+      "command": "RUTA_A_PYTHON",
       "args": ["-m", "prestashop_mcp.prestashop_mcp_server"],
       "cwd": "C:\\Users\\TU_USUARIO\\AppData\\Roaming\\prestashop-local-mcp"
     }
@@ -791,7 +724,38 @@ Get general shop information.
 Use prestashop:get_products_by_category for category AGOTADOS and return 10 products.
 ```
 
-## 11. Buscar productos por categoria real
+## 7. Instalacion manual alternativa con Git
+
+Usa esta opcion solo si tienes Git instalado y disponible en el PATH.
+
+```powershell
+py -m pip install git+https://github.com/golfo161/prestashop-local-mcp.git
+```
+
+## 8. Instalacion para desarrollo
+
+Usa estos pasos si quieres modificar el codigo fuente.
+
+```powershell
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON"
+git clone https://github.com/golfo161/prestashop-local-mcp.git PRESTASHOP-LOCAL-MCP
+cd "C:\Users\TU_USUARIO\OneDrive\Documentos\PYTHON\PRESTASHOP-LOCAL-MCP"
+py -m venv venv_prestashop
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\venv_prestashop\Scripts\Activate.ps1
+py -m pip install --upgrade pip
+pip install -e ".[dev]"
+```
+
+Si PowerShell no permite activar el entorno virtual, puedes ejecutar el modulo con el Python del entorno virtual sin activar nada.
+
+Comprueba que el paquete carga:
+
+```powershell
+py -c "import prestashop_mcp; print('Installation successful')"
+```
+
+## 9. Buscar productos por categoria real
 
 PrestaShop permite que un producto este asociado a varias categorias. La herramienta `get_products` filtra por `id_category_default`, por lo que puede no encontrar productos que pertenecen a una categoria secundaria.
 
@@ -837,7 +801,7 @@ La respuesta incluye:
 
 Nota: esta herramienta es de solo lectura.
 
-## 12. ChatGPT Apps y MCP remoto
+## 10. ChatGPT Apps y MCP remoto
 
 ChatGPT Apps no se conecta directamente a servidores MCP locales `stdio`. Para usar este MCP como app de ChatGPT fuera de Codex, debes exponerlo como servidor MCP remoto o usar Secure MCP Tunnel.
 
@@ -847,7 +811,7 @@ Resumen:
 - Claude Desktop: usa `C:\Users\TU_USUARIO\AppData\Roaming\Claude\claude_desktop_config.json`.
 - ChatGPT Apps: requiere MCP remoto o Secure MCP Tunnel.
 
-## 13. Actualizaciones y reconexion
+## 11. Actualizaciones y reconexion
 
 Si modificas ficheros del modulo, reinicia el cliente para que vuelva a cargar el servidor MCP.
 
@@ -863,7 +827,7 @@ En Codex o Claude Desktop, lo normal es cerrar y volver a abrir el cliente o ini
 
 En ChatGPT Apps/MCP remoto, los cambios de herramientas no se aplican automaticamente. Hay que refrescar o escanear herramientas otra vez. Si la app ya esta publicada en un workspace, un administrador debe revisar y publicar la actualizacion. En planes Business, puede ser necesario recrear y republicar la app.
 
-## 14. Comandos utiles
+## 12. Comandos utiles
 
 En una instalacion asistida, usa los `.bat` creados dentro de la carpeta elegida. En una instalacion manual con `pip`, usa `py -m prestashop_mcp.cli ...`. El comando `prestashop-local-mcp ...` solo funciona si la carpeta `Scripts` de Python esta en el `PATH`.
 
@@ -1016,7 +980,7 @@ Ejecutar tests seguros:
 .\venv_prestashop\Scripts\python.exe -m pytest tests\test_config.py tests\test_prestashop_client.py tests\test_cli.py tests\test_windows_installer.py
 ```
 
-## 15. Seguridad
+## 13. Seguridad
 
 - No subas `.env` a Git.
 - Usa una clave de Webservice con los permisos minimos necesarios.
@@ -1024,7 +988,7 @@ Ejecutar tests seguros:
 - Revisa las acciones de escritura antes de aprobarlas desde el cliente.
 - Haz copia de seguridad de la tienda antes de probar acciones masivas.
 
-## 16. Referencias y creditos
+## 14. Referencias y creditos
 
 - Repositorio del proyecto: https://github.com/golfo161/prestashop-local-mcp
 - Basado originalmente en: https://github.com/latinogino/prestashop-mcp
