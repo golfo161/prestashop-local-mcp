@@ -151,6 +151,38 @@ class PrestaShopClient:
 
         return self._init_multilingual_field(value)
 
+    def _replace_multilingual_field(
+        self,
+        existing_field: Any,
+        value: Any,
+        max_length: Optional[int] = None,
+        transform: Optional[Any] = None
+    ) -> List[Dict[str, Any]]:
+        """Replace a multilingual field, preserving the language IDs when possible."""
+        if isinstance(existing_field, list) and existing_field:
+            field = []
+            for item in existing_field:
+                if not isinstance(item, dict) or item.get("id") is None:
+                    continue
+                language = next(
+                    (
+                        lang
+                        for lang in self.available_languages
+                        if str(lang.get("id")) == str(item.get("id"))
+                    ),
+                    {"id": item.get("id"), "iso_code": str(item.get("id"))}
+                )
+                translated = self._get_translation(value, language)
+                if transform:
+                    translated = transform(translated)
+                if max_length is not None:
+                    translated = translated[:max_length]
+                field.append({"id": item.get("id"), "value": translated})
+            if field:
+                return field
+
+        return self._build_multilingual_field(value, max_length=max_length, transform=transform)
+
     def _build_multilingual_from_languages(
         self,
         builder: Any
@@ -175,7 +207,8 @@ class PrestaShopClient:
         text = re.sub(r"(?i)</\s*(p|li|div|h[1-6])\s*>", ". ", text)
         text = re.sub(r"<[^>]+>", " ", text)
         text = html.unescape(text)
-        return re.sub(r"\s+", " ", text).strip(" .")
+        text = re.sub(r"\.{2,}", ".", text)
+        return re.sub(r"\s+", " ", text).strip()
 
     def _generate_meta_title(self, name: Any, language: Dict[str, Any]) -> str:
         """Generate a concise SEO title from the localized product name."""
@@ -312,6 +345,47 @@ class PrestaShopClient:
                 for feature in feature_links
             ]
         return associations
+
+    def _sanitize_product_for_write(self, product_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Remove read-only or validation-sensitive product fields before PUT."""
+        sanitized = dict(product_data)
+        for field in [
+            "manufacturer_name",
+            "position_in_category",
+            "quantity",
+            "date_add",
+            "date_upd",
+        ]:
+            sanitized.pop(field, None)
+        return sanitized
+
+    def _merge_product_associations(
+        self,
+        associations: Optional[Dict[str, Any]],
+        category_id: Optional[str] = None,
+        feature_links: Optional[List[Dict[str, str]]] = None
+    ) -> Dict[str, Any]:
+        """Preserve existing associations while replacing requested category/features."""
+        merged = dict(associations or {})
+        if category_id is not None:
+            merged["categories"] = [
+                {
+                    "category": {
+                        "id": str(category_id)
+                    }
+                }
+            ]
+        if feature_links is not None:
+            merged["product_features"] = [
+                {
+                    "product_feature": {
+                        "id": str(feature["id_feature"]),
+                        "id_feature_value": str(feature["id_feature_value"])
+                    }
+                }
+                for feature in feature_links
+            ]
+        return merged
 
     def _get_response_items(self, response: Dict[str, Any], singular: str, plural: str) -> List[Dict[str, Any]]:
         """Normalize PrestaShop JSON responses that may use singular or plural roots."""
@@ -886,34 +960,75 @@ class PrestaShopClient:
         **kwargs
     ) -> Dict[str, Any]:
         """Update an existing product in PrestaShop."""
+        feature_links = None
+        if "features" in kwargs:
+            feature_links = await self._resolve_product_feature_links(kwargs.get("features"))
+
         # First get the existing product
         existing = await self._make_request('GET', f'products/{product_id}')
         
         if 'product' not in existing:
             raise PrestaShopAPIError(f"Product {product_id} not found")
         
-        product_data = existing['product']
-        product_data.pop('manufacturer_name', None)
+        product_data = self._sanitize_product_for_write(existing['product'])
         associations = product_data.pop('associations', None)
         
         # Update fields with correct multilingual structure
         if 'name' in kwargs:
-            product_data['name'] = self._replace_multilingual_values(
+            product_data['name'] = self._replace_multilingual_field(
                 product_data.get('name'),
                 kwargs['name']
             )
-            link_rewrite = self._generate_link_rewrite(kwargs['name'])
-            product_data['link_rewrite'] = self._replace_multilingual_values(
-                product_data.get('link_rewrite'),
-                link_rewrite
-            )
+            if 'link_rewrite' not in kwargs:
+                product_data['link_rewrite'] = self._replace_multilingual_field(
+                    product_data.get('link_rewrite'),
+                    kwargs['name'],
+                    transform=self._generate_link_rewrite
+                )
         if 'price' in kwargs:
             product_data['price'] = str(kwargs['price'])
+        if 'wholesale_price' in kwargs:
+            product_data['wholesale_price'] = str(kwargs['wholesale_price'])
         if 'description' in kwargs:
-            product_data['description'] = self._replace_multilingual_values(
+            product_data['description'] = self._replace_multilingual_field(
                 product_data.get('description'),
                 kwargs['description']
             )
+        if 'summary' in kwargs:
+            product_data['description_short'] = self._replace_multilingual_field(
+                product_data.get('description_short'),
+                kwargs['summary'],
+                max_length=1500
+            )
+        if 'meta_title' in kwargs:
+            product_data['meta_title'] = self._replace_multilingual_field(
+                product_data.get('meta_title'),
+                kwargs['meta_title'],
+                max_length=70
+            )
+        if 'meta_description' in kwargs:
+            product_data['meta_description'] = self._replace_multilingual_field(
+                product_data.get('meta_description'),
+                kwargs['meta_description'],
+                max_length=160
+            )
+        if 'meta_keywords' in kwargs:
+            product_data['meta_keywords'] = self._replace_multilingual_field(
+                product_data.get('meta_keywords'),
+                kwargs['meta_keywords']
+            )
+        if 'link_rewrite' in kwargs:
+            product_data['link_rewrite'] = self._replace_multilingual_field(
+                product_data.get('link_rewrite'),
+                kwargs['link_rewrite'],
+                transform=self._generate_link_rewrite
+            )
+        if 'reference' in kwargs:
+            product_data['reference'] = kwargs['reference']
+        if 'weight' in kwargs:
+            product_data['weight'] = str(kwargs['weight'])
+        if 'tax_rules_group_id' in kwargs:
+            product_data['id_tax_rules_group'] = str(kwargs['tax_rules_group_id'])
         if 'category_id' in kwargs:
             product_data['id_category_default'] = kwargs['category_id']
         if 'active' in kwargs:
@@ -925,20 +1040,31 @@ class PrestaShopClient:
                 product_data['indexed'] = "1"
                 product_data['visibility'] = "both"
 
-        if 'category_id' in kwargs:
-            product_data['associations'] = self._build_product_category_associations(kwargs['category_id'])
-        elif kwargs.get('active') and product_data.get('id_category_default'):
-            product_data['associations'] = self._build_product_category_associations(
-                product_data['id_category_default']
-            )
-        elif associations:
-            product_data['associations'] = associations
+        merged_associations = self._merge_product_associations(
+            associations,
+            category_id=kwargs.get('category_id'),
+            feature_links=feature_links
+        )
+        if merged_associations:
+            product_data['associations'] = merged_associations
         
-        return await self._make_request(
+        result = await self._make_request(
             'PUT', 
             f'products/{product_id}', 
             data={"product": product_data}
         )
+
+        if kwargs.get('image_path'):
+            try:
+                result['image_upload'] = await self.upload_product_image(product_id, kwargs['image_path'])
+            except Exception as e:
+                logging.warning(f"Product updated but image upload failed: {e}")
+                result['image_upload'] = {"error": str(e)}
+
+        if feature_links is not None:
+            result['feature_links'] = feature_links
+
+        return result
     
     async def delete_product(self, product_id: str) -> Dict[str, Any]:
         """Delete a product from PrestaShop."""
@@ -1095,17 +1221,40 @@ class PrestaShopClient:
             "active": existing['category'].get('active', '1'),
             "name": existing['category'].get('name', []),
             "link_rewrite": existing['category'].get('link_rewrite', []),
-            "description": existing['category'].get('description', [])
+            "description": existing['category'].get('description', []),
+            "meta_title": existing['category'].get('meta_title', []),
+            "meta_description": existing['category'].get('meta_description', []),
+            "meta_keywords": existing['category'].get('meta_keywords', [])
         }
         
         # Update only the requested fields with correct multilingual structure
         if 'name' in kwargs:
             category_data['name'] = self._init_multilingual_field(kwargs['name'])
-            link_rewrite = self._generate_link_rewrite(kwargs['name'])
-            category_data['link_rewrite'] = self._init_multilingual_field(link_rewrite)
+            if 'link_rewrite' not in kwargs:
+                link_rewrite = self._generate_link_rewrite(kwargs['name'])
+                category_data['link_rewrite'] = self._init_multilingual_field(link_rewrite)
         
         if 'description' in kwargs:
             category_data['description'] = self._init_multilingual_field(kwargs['description'])
+
+        if 'parent_id' in kwargs:
+            category_data['id_parent'] = kwargs['parent_id']
+
+        if 'link_rewrite' in kwargs:
+            category_data['link_rewrite'] = self._init_multilingual_field(
+                self._generate_link_rewrite(kwargs['link_rewrite'])
+            )
+
+        if 'meta_title' in kwargs:
+            category_data['meta_title'] = self._init_multilingual_field(str(kwargs['meta_title'])[:70])
+
+        if 'meta_description' in kwargs:
+            category_data['meta_description'] = self._init_multilingual_field(
+                str(kwargs['meta_description'])[:160]
+            )
+
+        if 'meta_keywords' in kwargs:
+            category_data['meta_keywords'] = self._init_multilingual_field(kwargs['meta_keywords'])
         
         if 'active' in kwargs:
             category_data['active'] = "1" if kwargs['active'] else "0"

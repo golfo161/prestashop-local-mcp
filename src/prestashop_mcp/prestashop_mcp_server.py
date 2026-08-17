@@ -69,6 +69,11 @@ async def handle_list_tools():
                     "category_id": {"type": "string", "description": "Category ID to update"},
                     "name": {"type": "string", "description": "New category name"},
                     "description": {"type": "string", "description": "New category description"},
+                    "parent_id": {"type": "string", "description": "New parent category ID"},
+                    "link_rewrite": {"type": "string", "description": "SEO-friendly category URL slug"},
+                    "meta_title": {"type": "string", "description": "SEO meta title"},
+                    "meta_description": {"type": "string", "description": "SEO meta description"},
+                    "meta_keywords": {"type": "string", "description": "SEO meta keywords"},
                     "active": {"type": "boolean", "description": "Whether category is active"}
                 },
                 "required": ["category_id"],
@@ -261,11 +266,139 @@ async def handle_list_tools():
                 "type": "object",
                 "properties": {
                     "product_id": {"type": "string", "description": "Product ID to update"},
-                    "name": {"type": "string", "description": "New product name"},
+                    "name": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "New product name"
+                    },
                     "price": {"type": "number", "description": "New product price"},
-                    "description": {"type": "string", "description": "New product description"},
+                    "wholesale_price": {"type": "number", "description": "New wholesale price"},
+                    "description": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "New long product description"
+                    },
+                    "summary": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "New product summary/short description"
+                    },
+                    "meta_title": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO meta title"
+                    },
+                    "meta_description": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO meta description"
+                    },
+                    "meta_keywords": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO meta keywords"
+                    },
+                    "link_rewrite": {
+                        "oneOf": [
+                            {"type": "string"},
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "es": {"type": "string"},
+                                    "en": {"type": "string"},
+                                    "fr": {"type": "string"}
+                                },
+                                "additionalProperties": False
+                            }
+                        ],
+                        "description": "SEO-friendly URL slug"
+                    },
                     "category_id": {"type": "string", "description": "New category ID"},
-                    "active": {"type": "boolean", "description": "Whether product is active"}
+                    "active": {"type": "boolean", "description": "Whether product is active"},
+                    "reference": {"type": "string", "description": "Product reference/SKU"},
+                    "weight": {"type": "number", "description": "Product weight"},
+                    "tax_rules_group_id": {"type": "string", "description": "PrestaShop tax rules group ID"},
+                    "features": {
+                        "type": "array",
+                        "description": "Optional replacement product features",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "feature_id": {"type": "string"},
+                                "id_feature": {"type": "string"},
+                                "feature_value_id": {"type": "string"},
+                                "id_feature_value": {"type": "string"},
+                                "name": {"type": "string"},
+                                "nombre": {"type": "string"},
+                                "feature": {"type": "string"},
+                                "value": {"type": "string"},
+                                "valor": {"type": "string"},
+                                "feature_value": {"type": "string"}
+                            },
+                            "additionalProperties": False
+                        }
+                    },
+                    "image_path": {"type": "string", "description": "Optional local absolute path to upload as a product image"}
                 },
                 "required": ["product_id"],
                 "additionalProperties": False
@@ -610,11 +743,23 @@ async def handle_call_tool(name: str, arguments: dict):
                 )
             
             elif name == "update_category":
+                update_kwargs = {}
+                for key in [
+                    'name',
+                    'description',
+                    'parent_id',
+                    'link_rewrite',
+                    'meta_title',
+                    'meta_description',
+                    'meta_keywords',
+                    'active',
+                ]:
+                    if key in arguments:
+                        update_kwargs[key] = arguments[key]
+
                 result = await client.update_category(
                     category_id=arguments['category_id'],
-                    name=arguments.get('name'),
-                    description=arguments.get('description'),
-                    active=arguments.get('active')
+                    **update_kwargs
                 )
             
             elif name == "delete_category":
@@ -667,7 +812,24 @@ async def handle_call_tool(name: str, arguments: dict):
             elif name == "update_product":
                 # Prepare kwargs for update
                 update_kwargs = {}
-                for key in ['name', 'price', 'description', 'category_id', 'active']:
+                for key in [
+                    'name',
+                    'price',
+                    'wholesale_price',
+                    'description',
+                    'summary',
+                    'meta_title',
+                    'meta_description',
+                    'meta_keywords',
+                    'link_rewrite',
+                    'category_id',
+                    'active',
+                    'reference',
+                    'weight',
+                    'tax_rules_group_id',
+                    'features',
+                    'image_path',
+                ]:
                     if key in arguments:
                         update_kwargs[key] = arguments[key]
                 

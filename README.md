@@ -44,7 +44,7 @@ Estas son las operaciones que expone actualmente el MCP.
 - `get_products`: consulta productos por ID o lista productos con filtros.
 - `get_products_by_category`: lista productos asociados a una categoria por ID o nombre, incluyendo categorias secundarias.
 - `create_product`: crea un producto nuevo desactivado inicialmente. Antes de usarla, el asistente debe mostrar una previsualizacion y esperar confirmacion explicita. Tambien puede subir imagen, resumen, campos SEO y caracteristicas.
-- `update_product`: actualiza un producto existente.
+- `update_product`: actualiza un producto existente. Permite modificar nombre, precio, precio mayorista, resumen, descripcion larga, campos SEO, URL amigable, categoria por defecto, referencia, peso, regla fiscal, estado activo, caracteristicas e imagen adicional.
 - `delete_product`: elimina un producto.
 - `update_product_stock`: cambia la cantidad de stock de un producto.
 - `update_product_price`: cambia precio y precio mayorista.
@@ -220,7 +220,7 @@ Flujo recomendado:
 
 - `get_categories`: lista categorias y permite filtrar por categoria padre.
 - `create_category`: crea una categoria.
-- `update_category`: actualiza nombre, descripcion o estado activo.
+- `update_category`: actualiza nombre, descripcion, categoria padre, URL amigable, SEO o estado activo.
 - `delete_category`: elimina una categoria.
 
 ### Clientes

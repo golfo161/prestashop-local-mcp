@@ -554,12 +554,193 @@ async def test_update_product_active_true_refreshes_catalog_visibility_fields():
     assert product["show_price"] == "1"
     assert product["indexed"] == "1"
     assert product["visibility"] == "both"
-    assert product["associations"] == {
-        "categories": [
-            {
-                "category": {
-                    "id": "210"
-                }
+    assert product["associations"] == {"images": [{"id": "5"}]}
+
+
+@pytest.mark.asyncio
+async def test_update_product_omits_position_in_category_from_put_payload():
+    client = SequenceClient([
+        {
+            "product": {
+                "id": "10",
+                "price": "99.000000",
+                "position_in_category": "5",
+                "manufacturer_name": "Maker",
+                "associations": {"images": [{"id": "5"}]},
             }
-        ]
-    }
+        },
+        {"product": {"id": "10", "price": "80.000000"}},
+    ])
+
+    await client.update_product("10", price=80)
+
+    product = client.requests[1]["data"]["product"]
+    assert product["price"] == "80"
+    assert "position_in_category" not in product
+    assert "manufacturer_name" not in product
+
+
+@pytest.mark.asyncio
+async def test_update_product_updates_full_product_fields_and_preserves_associations():
+    client = SequenceClient([
+        {
+            "product": {
+                "id": "10",
+                "name": [
+                    {"id": 1, "value": "Old"},
+                    {"id": 5, "value": "Old"},
+                    {"id": 6, "value": "Old"},
+                ],
+                "description": [
+                    {"id": 1, "value": ""},
+                    {"id": 5, "value": ""},
+                    {"id": 6, "value": ""},
+                ],
+                "description_short": [
+                    {"id": 1, "value": "Old summary"},
+                    {"id": 5, "value": "Old summary"},
+                    {"id": 6, "value": "Old summary"},
+                ],
+                "meta_title": [
+                    {"id": 1, "value": "Old title"},
+                    {"id": 5, "value": "Old title"},
+                    {"id": 6, "value": "Old title"},
+                ],
+                "meta_description": [
+                    {"id": 1, "value": "Old meta"},
+                    {"id": 5, "value": "Old meta"},
+                    {"id": 6, "value": "Old meta"},
+                ],
+                "meta_keywords": [
+                    {"id": 1, "value": "old"},
+                    {"id": 5, "value": "old"},
+                    {"id": 6, "value": "old"},
+                ],
+                "link_rewrite": [
+                    {"id": 1, "value": "old"},
+                    {"id": 5, "value": "old"},
+                    {"id": 6, "value": "old"},
+                ],
+                "reference": "OLD",
+                "price": "10.000000",
+                "wholesale_price": "5.000000",
+                "weight": "0.100000",
+                "id_tax_rules_group": "15",
+                "associations": {
+                    "categories": [{"id": "210"}],
+                    "images": [{"id": "5"}],
+                    "product_features": [{"id": "4", "id_feature_value": "9"}],
+                },
+            }
+        },
+        {"product": {"id": "10"}},
+    ])
+
+    await client.update_product(
+        "10",
+        name={"es": "Nuevo", "en": "New", "fr": "Nouveau"},
+        summary={"es": "Resumen", "en": "Summary", "fr": "Resume"},
+        description={"es": "Descripcion larga", "en": "Long description", "fr": "Description longue"},
+        meta_title={"es": "Titulo", "en": "Title", "fr": "Titre"},
+        meta_description={"es": "Meta es", "en": "Meta en", "fr": "Meta fr"},
+        meta_keywords={"es": "uno, dos", "en": "one, two", "fr": "un, deux"},
+        link_rewrite={"es": "nuevo", "en": "new", "fr": "nouveau"},
+        reference="NEW-001",
+        price=80,
+        wholesale_price=40,
+        weight=1.25,
+        tax_rules_group_id="7",
+    )
+
+    product = client.requests[1]["data"]["product"]
+    assert product["name"][0]["value"] == "Nuevo"
+    assert product["description_short"][1]["value"] == "Summary"
+    assert product["description"][2]["value"] == "Description longue"
+    assert product["meta_title"][1]["value"] == "Title"
+    assert product["meta_description"][2]["value"] == "Meta fr"
+    assert product["meta_keywords"][0]["value"] == "uno, dos"
+    assert product["link_rewrite"][2]["value"] == "nouveau"
+    assert product["reference"] == "NEW-001"
+    assert product["price"] == "80"
+    assert product["wholesale_price"] == "40"
+    assert product["weight"] == "1.25"
+    assert product["id_tax_rules_group"] == "7"
+    assert product["associations"]["images"] == [{"id": "5"}]
+    assert product["associations"]["product_features"] == [{"id": "4", "id_feature_value": "9"}]
+
+
+@pytest.mark.asyncio
+async def test_update_product_can_replace_feature_associations_by_name():
+    client = SequenceClient([
+        {"product_features": [{"id": "3", "name": [{"id": "1", "value": "Composicion"}]}]},
+        {
+            "product_feature_values": [
+                {"id": "9", "id_feature": "3", "value": [{"id": "1", "value": "100% Poliamida"}]}
+            ]
+        },
+        {
+            "product": {
+                "id": "10",
+                "associations": {
+                    "categories": [{"id": "210"}],
+                    "images": [{"id": "5"}],
+                    "product_features": [{"id": "4", "id_feature_value": "8"}],
+                },
+            }
+        },
+        {"product": {"id": "10"}},
+    ])
+
+    await client.update_product(
+        "10",
+        features=[{"name": "Composicion", "value": "100% Poliamida"}],
+    )
+
+    product = client.requests[3]["data"]["product"]
+    assert product["associations"]["categories"] == [{"id": "210"}]
+    assert product["associations"]["images"] == [{"id": "5"}]
+    assert product["associations"]["product_features"] == [
+        {"product_feature": {"id": "3", "id_feature_value": "9"}}
+    ]
+
+
+@pytest.mark.asyncio
+async def test_update_category_can_move_and_update_seo_fields():
+    client = SequenceClient([
+        {
+            "category": {
+                "id": "20",
+                "id_parent": "2",
+                "active": "1",
+                "name": [{"id": 1, "value": "Old"}],
+                "link_rewrite": [{"id": 1, "value": "old"}],
+                "description": [{"id": 1, "value": "Old description"}],
+                "meta_title": [{"id": 1, "value": "Old title"}],
+                "meta_description": [{"id": 1, "value": "Old meta"}],
+                "meta_keywords": [{"id": 1, "value": "old"}],
+            }
+        },
+        {"category": {"id": "20"}},
+    ])
+
+    await client.update_category(
+        "20",
+        name="Nueva subcategoria",
+        description="Nueva descripcion",
+        parent_id="10",
+        link_rewrite="nueva-subcategoria",
+        meta_title="Titulo SEO",
+        meta_description="Descripcion SEO",
+        meta_keywords="lana, algodon",
+        active=False,
+    )
+
+    category = client.requests[1]["data"]["category"]
+    assert category["id_parent"] == "10"
+    assert category["active"] == "0"
+    assert category["name"][0]["value"] == "Nueva subcategoria"
+    assert category["description"][0]["value"] == "Nueva descripcion"
+    assert category["link_rewrite"][0]["value"] == "nueva-subcategoria"
+    assert category["meta_title"][0]["value"] == "Titulo SEO"
+    assert category["meta_description"][0]["value"] == "Descripcion SEO"
+    assert category["meta_keywords"][0]["value"] == "lana, algodon"
