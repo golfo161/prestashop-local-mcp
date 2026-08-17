@@ -30,7 +30,13 @@ Cuando trabajes con la tienda desde un asistente, las respuestas deben ser opera
 
 Para crear productos, el asistente debe mostrar siempre una previsualizacion antes de llamar a `create_product`. Si el usuario confirma la previsualizacion, crea el producto. Si no la confirma, pide los cambios necesarios o espera una nueva ficha.
 
-Guia operativa para asistentes: consulta `docs/PRESTASHOP_OPERATIONS.md` para el protocolo recomendado de altas, modificaciones, bajas, verificaciones, SEO, traducciones, imagenes, stock y operaciones masivas.
+Guia operativa para asistentes: antes de operar con productos, categorias, stock, precios, imagenes o acciones masivas, indica al asistente que use `docs/PRESTASHOP_OPERATIONS.md` como protocolo operativo.
+
+Frase recomendada:
+
+```text
+Usa docs/PRESTASHOP_OPERATIONS.md como guia operativa para trabajar con este MCP de PrestaShop.
+```
 
 ## 2. Funcionalidades disponibles
 
